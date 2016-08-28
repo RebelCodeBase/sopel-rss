@@ -18,13 +18,13 @@ All commands require owner or admin privileges.
 
 **Synopsis:** *.rss add \<channel\> \<name\> \<url\> [\<format\>]*
 
-Add the feed *\<url\>* to *\<channel\>* and call it *\<name\>* Optionally, a format can be specified, see section Format. The feed will be read approximately every minute and new items will be automatically posted to *\<channel\>*.
+Add the feed *\<url\>* to *\<channel\>* and call it *\<name\>*. Optionally, a format can be specified, see section Format. The feed will be read approximately every minute and new items will be automatically posted to *\<channel\>*.
 
 ### rss del &mdash; delete a feed
 
-**Synopsis:** *.rss del \<id\>|\<name\>*
+**Synopsis:** *.rss del \<name\>*
 
-Use *.rsslist* to list get the names and IDs of all feeds. Deletion by ID is per default turned off (cf. Options: *del_by_id*).
+Delete the feed called \<name\>.
 
 ### rss get &mdash; read a feed and post new items
 
@@ -40,7 +40,7 @@ Post all items of the feed to the channel of the feed. Mainly useful for debuggi
 
 **Synopsis:** *.rss join*
 
-Every feed must have a channel associated to it. *.rss join* joins these channels. This command is only needed in case of problems as channels are automatically joind after adding a feed or restarting the bot.
+Every feed must have a channel associated to it and *.rss join* joins these channels. This command is only needed in case of problems as channels are automatically joind after adding a feed or restarting the bot.
  
 ### rss update &mdash; post new feed item
 
