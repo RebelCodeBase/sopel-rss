@@ -116,3 +116,7 @@ This module is extensively tested through [py.test](http://doc.pytest.org):
 ### License
 
 This project is licensed under the GNU General Public License.
+
+### Notes
+
+I came across [f4bio/sopel-rss](https://github.com/f4bio/sopel-rss) when I was looking for an rss2irc app. First, I've forked his repo but then the coding took a very different turn so I decided to create a new repository. f4bio, thanks a lot for your inspiration!
