@@ -1,6 +1,10 @@
 # sopel-rss
 
-[sopel-rss](https://github.com/RebelCodeBase/sopel-rss) is an [RSS](https://en.wikipedia.org/wiki/RSS) module for the [IRC](https://en.wikipedia.org/wiki/Internet_Relay_Chat) bot framework [sopel](https://github.com/sopel-irc/sopel). The [Ansible](https://en.wikipedia.org/wiki/Ansible_(software)) role [ansible-role-sopel-runit-debian](https://github.com/RebelCodeBase/ansible-role-sopel-runit-debian) which can be used to deploy the bot from [Github](https://en.wikipedia.org/wiki/GitHub) to [Debian](https://en.wikipedia.org/wiki/Debian) using [runit](https://en.wikipedia.org/wiki/Runit).
+[sopel-rss](https://github.com/RebelCodeBase/sopel-rss) is an [RSS](https://en.wikipedia.org/wiki/RSS) module for the [IRC](https://en.wikipedia.org/wiki/Internet_Relay_Chat) bot framework [sopel](https://github.com/sopel-irc/sopel). 
+
+## Deployment
+
+The [Ansible](https://en.wikipedia.org/wiki/Ansible_(software)) role [ansible-role-sopel-runit-debian](https://github.com/RebelCodeBase/ansible-role-sopel-runit-debian) can be used to deploy the bot from [Github](https://en.wikipedia.org/wiki/GitHub) to [Debian](https://en.wikipedia.org/wiki/Debian) using [runit](https://en.wikipedia.org/wiki/Runit).
 
 ## Installation
 
