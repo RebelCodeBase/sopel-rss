@@ -52,7 +52,7 @@ Calls the internal function which updates the feed every minute. This command is
 
 The following options can be set in the configuration file. Be aware that the bot mustn't be running when editing the configuration file. Otherwise, your edits may be overwritten!
 
-**Synopsis:** *feeds=\<channel1\> \<name1\> \<url1\> [\<format\>][,\<channel2\> \<name2\> \<url2\> [\<format\>]]...*
+**Synopsis:** *feeds=\<channel1\> \<name1\> \<url1\> [\<format1\>][,\<channel2\> \<name2\> \<url2\> [\<format2\>]]...*
 
 *Default:* empty
 
