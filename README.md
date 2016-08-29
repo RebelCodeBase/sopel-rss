@@ -36,17 +36,19 @@ Post all items of the feed to the channel of the feed. Mainly useful for debuggi
 
 **Synopsis:** *.rss list [\<feed\>|\<channel\>]*
 
+List properties of \<feed\> or list all feeds in \<channel\>. 
+
 ### rss join &mdash; join all feeds' channels
 
 **Synopsis:** *.rss join*
 
 Every feed must have a channel associated to it and *.rss join* joins these channels. This command is only needed in case of problems as channels are automatically joind after adding a feed or restarting the bot.
  
-### rss update &mdash; post new feed item
+### rss update &mdash; post new feed items
 
 **Synopsis:** *.rss update*
 
-Calls the internal function which updates the feed every minute. This command is only needed if you want to new feed items to be posted immediately.
+Calls the internal function which updates the feed every minute. This command is only needed if you want new feed items to be posted immediately.
 
 ## Options
 
@@ -58,7 +60,7 @@ The following options can be set in the configuration file. Be aware that the bo
 
 This is the main data of the bot which will be read when the bot is started or when the owner or an admin issues the command *.reload rss* in a query with the bot.
 
-### Formats
+## Formats
 
 A *format* string defines which feed item fields be be hashed, i.e. when two feed items will be considered equal, and which field item fields will be output by the bot. Both definitions are separated by a '+'. Each valid rss feed must have at least a title or a description field, all other item fields are optional. These fields can be configured for sopel-rss:
 
@@ -107,16 +109,16 @@ Example: *flst+tal*
 
 The feedname, link, summary and title will be used to hash the feed item. If any of these fields change in the feed the feed item will be posted again. The bot will post the title, author and link of the feed item but not the feedname.
 
-### Unit Tests
+## Unit Tests
 
 This module is extensively tested through [py.test](http://doc.pytest.org):
 
 `python3 -m pytest -v sopel/modules/rss.py test/test_rss.py`
 
-### License
+## License
 
 This project is licensed under the GNU General Public License.
 
-### Notes
+## Notes
 
 I came across [f4bio/sopel-rss](https://github.com/f4bio/sopel-rss) when I was looking for an rss2irc app. First, I've forked his repo but then the coding took a very different turn so I decided to create a new repository. f4bio, thanks a lot for your inspiration!
