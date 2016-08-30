@@ -54,6 +54,17 @@ FEED_VALID = '''<?xml version="1.0" encoding="utf-8" ?>
 </rss>'''
 
 
+FEED_INVALID = '''<?xml version="1.0" encoding="utf-8" ?>
+<rss version="2.0" xml:base="http://www.site1.com/feed" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel>
+<title>Site 1 Articles</title>
+<link>http://www.site1.com/feed</link>
+<description></description>
+<language>en</language>
+</channel>
+</rss>'''
+
+
 FEED_ITEM_NEITHER_TITLE_NOR_DESCRIPTION = '''<?xml version="1.0" encoding="utf-8" ?>
 <rss version="2.0" xml:base="http://www.site1.com/feed" xmlns:dc="http://purl.org/dc/elements/1.1/">
 <channel>
@@ -143,6 +154,11 @@ def bot_rssUpdate(request):
 @pytest.fixture(scope="module")
 def feedreader_feed_valid():
     return MockFeedReader(FEED_VALID)
+
+
+@pytest.fixture(scope="module")
+def feedreader_feed_invalid():
+    return MockFeedReader(FEED_INVALID)
 
 
 @pytest.fixture(scope="module")
@@ -499,7 +515,7 @@ def test_feedAdd_create_feed(bot):
     assert {'name': 'feedname', 'url': FEED_VALID, 'channel': '#channel'} == feed
 
 
-def test_feedCheck_valid(bot, feedreader_feed_valid):
+def test_feedCheck_feed_valid(bot, feedreader_feed_valid):
     checkresults = rss.__feedCheck(bot, feedreader_feed_valid, '#newchannel', 'newname')
     assert not checkresults
 
@@ -513,6 +529,12 @@ def test_feedCheck_feedname_must_be_unique(bot, feedreader_feed_valid):
 def test_feedCheck_channel_must_start_with_hash(bot, feedreader_feed_valid):
     checkresults = rss.__feedCheck(bot, feedreader_feed_valid, 'nohashsign', 'newname')
     expected = [rss.MESSAGES['channel_must_start_with_a_hash_sign'].format('nohashsign')]
+    assert expected == checkresults
+
+
+def test_feedCheck_feed_invalid(bot, feedreader_feed_invalid):
+    checkresults = rss.__feedCheck(bot, feedreader_feed_invalid, '#channel', 'newname')
+    expected = [rss.MESSAGES['unable_to_read_feed'].format('nohashsign')]
     assert expected == checkresults
 
 
