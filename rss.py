@@ -535,6 +535,17 @@ def __feedCheck(bot, feedreader, channel, feedname):
     feed = feedreader.get_feed()
     if not feed:
         message = MESSAGES['unabele_to_read_feed']
+        return [message]
+
+    try:
+        item = feed['entries'][0]
+    except IndexError:
+        message = MESSAGES['unable_to_read_feed']
+        return [message]
+
+    # check that feed items have either title or description
+    if not hasattr(item, 'title') and not hasattr(item, 'description'):
+        message = MESSAGES['feed_items_have_neither_title_nor_description']
         result.append(message)
 
     # check that feed name is unique
@@ -545,12 +556,6 @@ def __feedCheck(bot, feedreader, channel, feedname):
     # check that channel starts with #
     if not channel.startswith('#'):
         message = MESSAGES['channel_must_start_with_a_hash_sign'].format(channel)
-        result.append(message)
-
-    # check that feed items have either title or description
-    item = feed['entries'][0]
-    if not hasattr(item, 'title') and not hasattr(item, 'description'):
-        message = MESSAGES['feed_items_have_neither_title_nor_description']
         result.append(message)
 
     return result
