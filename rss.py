@@ -647,24 +647,25 @@ class FeedFormater:
         return self.__formatGetFields(self.feedreader)
 
     def get_hash(self, feedname, item):
-        fullitem = dict()
-        fullitem['author'] = self.__createFullItem('author', item)
-        fullitem['description'] = self.__createFullItem('description', item)
-        fullitem['guid'] = self.__createFullItem('guid', item)
-        fullitem['link'] = self.__createFullItem('link', item)
-        fullitem['published'] = self.__createFullItem('published', item)
-        fullitem['summary'] = self.__createFullItem('summary', item)
-        fullitem['title'] = self.__createFullItem('title', item)
+        saneitem = dict()
+        saneitem['author'] = self.__valueSanitize('author', item)
+        saneitem['description'] = self.__valueSanitize('description', item)
+        saneitem['guid'] = self.__valueSanitize('guid', item)
+        saneitem['link'] = self.__valueSanitize('link', item)
+        saneitem['published'] = self.__valueSanitize('published', item)
+        saneitem['summary'] = self.__valueSanitize('summary', item)
+        saneitem['title'] = self.__valueSanitize('title', item)
 
         legend = {
             'f': feedname,
-            'a': fullitem['author'],
-            'd': fullitem['description'],
-            'g': fullitem['guid'],
-            'l': fullitem['link'],
-            'p': fullitem['published'],
-            's': fullitem['summary'],
-            't': fullitem['title'],
+            'a': saneitem['author'],
+            'd': saneitem['description'],
+            'g': saneitem['guid'],
+            'l': saneitem['link'],
+            'p': saneitem['published'],
+            's': saneitem['summary'],
+            't': saneitem['title'],
+            'u': self.feedreader.get_shorturl(saneitem['link']),
         }
 
         signature = ''
@@ -680,13 +681,13 @@ class FeedFormater:
         return 'fd+fd'
 
     def get_post(self, feedname, item):
-        fullitem = dict()
-        fullitem['author'] = self.__createFullItem('author', item)
-        fullitem['description'] = self.__createFullItem('description', item)
-        fullitem['guid'] = self.__createFullItem('guid', item)
-        fullitem['link'] = self.__createFullItem('link', item)
-        fullitem['summary'] = self.__createFullItem('summary', item)
-        fullitem['title'] = self.__createFullItem('title', item)
+        saneitem = dict()
+        saneitem['author'] = self.__valueSanitize('author', item)
+        saneitem['description'] = self.__valueSanitize('description', item)
+        saneitem['guid'] = self.__valueSanitize('guid', item)
+        saneitem['link'] = self.__valueSanitize('link', item)
+        saneitem['summary'] = self.__valueSanitize('summary', item)
+        saneitem['title'] = self.__valueSanitize('title', item)
 
         pubtime = ''
         if 'p' in self.output:
@@ -694,13 +695,14 @@ class FeedFormater:
 
         legend = {
             'f': bold('[' + feedname + ']'),
-            'a': '<' + fullitem['author'] + '>',
-            'd': '|' + fullitem['description'] + '|',
-            'g': '{' + fullitem['guid'] + '}',
-            'l': bold('→') + ' ' + fullitem['link'],
+            'a': '<' + saneitem['author'] + '>',
+            'd': '|' + saneitem['description'] + '|',
+            'g': '{' + saneitem['guid'] + '}',
+            'l': bold('→') + ' ' + saneitem['link'],
             'p': '(' + pubtime + ')',
-            's': '«' + fullitem['summary']+ '»',
-            't': fullitem['title'],
+            's': '«' + saneitem['summary']+ '»',
+            't': saneitem['title'],
+            'u': bold('→') + ' ' + self.feedreader.get_shorturl(saneitem['link']),
         }
 
         post = ''
@@ -725,11 +727,6 @@ class FeedFormater:
         self.hashed = format_splitted[0]
         self.output = format_splitted[1]
         return self.format
-
-    def __createFullItem(self, key, item):
-        if hasattr(item, key):
-            return item[key]
-        return ''
 
     def __formatGetFields(self, feedreader):
         feed = feedreader.get_feed()
@@ -822,6 +819,11 @@ class FeedFormater:
 
         return True
 
+    def __valueSanitize(self, key, item):
+        if hasattr(item, key):
+            return item[key]
+        return ''
+
 
 # Implementing an rss feed reader for dependency injection
 class FeedReader:
@@ -834,6 +836,9 @@ class FeedReader:
             return feed
         except:
             return False
+
+    def get_shorturl(self, url):
+        return url
 
 
 # Implementing a ring buffer

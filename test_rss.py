@@ -175,8 +175,8 @@ class MockFeedReader:
         feed = feedparser.parse(self.url)
         return feed
 
-    def get_url(self):
-        return 'mock_url'
+    def get_shorturl(self, url):
+        return 'mock_shorturl'
 
 
 def test_rss_too_many_parameters(bot):
