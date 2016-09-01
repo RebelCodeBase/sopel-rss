@@ -124,21 +124,8 @@ def bot(request):
 
 
 @pytest.fixture(scope="function")
-def bot_config_get_feed(request):
+def bot_void(request):
     bot = __fixtureBotSetup(request)
-    return bot
-
-
-@pytest.fixture(scope="function")
-def bot_config_read(request):
-    bot = __fixtureBotSetup(request)
-    return bot
-
-
-@pytest.fixture(scope="function")
-def bot_config_save(request):
-    bot = __fixtureBotSetup(request)
-    bot = __fixtureBotAddData(bot, '1', 'http://www.site1.com/feed')
     return bot
 
 
@@ -435,22 +422,60 @@ def test_configDefine_formats():
     assert type(bot.memory['rss']['formats']['feeds']) == dict
 
 
-def test_configRead(bot_config_read):
-    pass
+def test_configRead_feed_default(bot_void):
+    rss.__configRead(bot_void)
+    feeds = bot_void.memory['rss']['feeds']
+    expected = {}
+    assert expected == feeds
 
-def test_configSave_writes(bot_config_save):
-    rss.__configSave(bot_config_save)
+
+def test_configRead_format_default(bot_void):
+    rss.__configRead(bot_void)
+    formats = bot_void.memory['rss']['formats']['default']
+    expected = rss.FORMAT_DEFAULT
+    assert expected == formats
+
+
+def test_configRead_format_custom(bot_void):
+    formats_custom = ['al+fpatl','y+fty']
+    bot_void.config.rss.formats = formats_custom
+    rss.__configRead(bot_void)
+    formats = bot_void.memory['rss']['formats']['default']
+    assert formats_custom == formats
+
+
+def test_configRead_template_default(bot_void):
+    rss.__configRead(bot_void)
+    templates = bot_void.memory['rss']['templates']['default']
+    expected = rss.TEMPLATES_DEFAULT
+    assert expected == templates
+
+
+def test_configRead_template_custom(bot_void):
+    templates_custom = ['t >>{}<<']
+    bot_void.config.rss.templates = templates_custom
+    rss.__configRead(bot_void)
+    templates = bot_void.memory['rss']['templates']['default']
+    expected = rss.TEMPLATES_DEFAULT
+    expected['t'] = '>>{}<<'
+    assert expected == templates
+
+
+def test_configSave_writes(bot):
+    rss.__configSave(bot)
     expected = '''[core]
 owner = '''+'''
 admins = '''+'''
-homedir = ''' + bot_config_save.config.homedir + '''
-db_filename = '''+ bot_config_save.db.filename + '''
+homedir = ''' + bot.config.homedir + '''
+db_filename = ''' + bot.db.filename + '''
 
 [rss]
 feeds = #channel1 feed1 http://www.site1.com/feed
+formats = '''+'''
+templates = '''+'''
 
 '''
-    f = open(bot_config_save.config.filename, 'r')
+    f = open(bot.config.filename, 'r')
     config = f.read()
     assert expected == config
 

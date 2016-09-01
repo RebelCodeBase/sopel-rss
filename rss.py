@@ -203,7 +203,7 @@ def rss(bot, trigger):
 def __rss(bot, args):
     args_count = len(args)
 
-    # check if we have a valid command or print general synopsis
+    # check if we have a valid command or output general synopsis
     if  args_count == 0 or args[0] not in COMMANDS.keys():
         message = MESSAGES['synopsis_rss'].format(
             bot.config.core.prefix, '|'.join(sorted(COMMANDS.keys())))
@@ -309,7 +309,7 @@ def __rssGet(bot, args):
 def __rssHelp(bot, args):
     args_count = len(args)
 
-    # check if we have a valid command or print general synopsis
+    # check if we have a valid command or output general synopsis
     if  args_count == 1 or args[0] not in COMMANDS.keys():
         message = COMMANDS[args[0]]['synopsis'].format(bot.config.core.prefix)
         bot.say(message)
@@ -318,7 +318,7 @@ def __rssHelp(bot, args):
             bot.say(message)
         return
 
-    # print help messages
+    # output help messages
     cmd = args[1]
     message = COMMANDS[cmd]['synopsis'].format(bot.config.core.prefix)
     bot.say(message)
@@ -400,38 +400,30 @@ def __configRead(bot):
             except IndexError:
                 format = ''
 
-            message = MESSAGES['added_rss_feed_to_channel_with_url'].format(feedname, channel, url, format)
-            print(message)
-
             __feedAdd(bot, channel, feedname, url, format)
             __hashesRead(bot, feedname)
 
     fields = ''
     for f in TEMPLATES_DEFAULT:
         fields += f
-
-    print('fields: ' + fields)
-
-    print('bot.config.rss.formats: ')
-    print(bot.config.rss.formats)
+        bot.memory['rss']['templates']['default'][f] = TEMPLATES_DEFAULT[f]
 
     # read default formats from config file
     if bot.config.rss.formats and bot.config.rss.formats[0]:
         for format in bot.config.rss.formats:
-
             # check if format contains only valid fields
-            if not set(format) <= set(fields):
+            if not set(format) <= set(fields + FORMAT_SEPARATOR):
                 continue
-
             bot.memory['rss']['formats']['default'].append(format)
 
-    print(bot.config.rss.formats)
-    print(bot.memory['rss']['formats']['default'])
+    if not bot.memory['rss']['formats']['default']:
+        bot.memory['rss']['formats']['default'] = FORMAT_DEFAULT
 
     # read default templates from config file
     if bot.config.rss.templates and bot.config.rss.templates[0]:
         for template in bot.config.rss.templates:
-            pass
+            atoms = template.split(' ')
+            bot.memory['rss']['templates']['default'][atoms[0]] = atoms[1]
 
     message = 'read config from disk'
     LOGGER.debug(message)
@@ -455,13 +447,23 @@ def __configSave(bot):
         if format != format_default:
             newfeed += ' ' + format
         feeds.append(newfeed)
-    bot.config.rss.feeds = [",".join(feeds)]
+    bot.config.rss.feeds = [','.join(feeds)]
 
     # save channels to config file
     channels = bot.config.core.channels
     for feedname, feed in bot.memory['rss']['feeds'].items():
         if not feed['channel'] in channels:
             bot.config.core.channels += [feed['channel']]
+
+    # flatten formats for config file
+    formats = [','.join(bot.memory['rss']['formats']['default'])]
+    bot.config.rss.formats = formats
+
+    # flatten templates for config file
+    templates = list()
+    for field, template in bot.memory['rss']['templates']['default']:
+        templates.append(field + ' ' + template)
+    bot.config.rss.templates = [','.join(templates)]
 
     try:
         bot.config.save()
