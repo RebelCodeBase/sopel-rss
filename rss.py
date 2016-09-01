@@ -12,11 +12,27 @@ import time
 import urllib.parse
 import urllib.request
 
-MAX_HASHES_PER_FEED = 300
-UPDATE_INTERVAL = 60 # seconds
-FORMAT_DEFAULT = 'fl+ftl'
-FORMAT_SEPARATOR = '+'
 LOGGER = get_logger(__name__)
+
+MAX_HASHES_PER_FEED = 300
+
+UPDATE_INTERVAL = 60 # seconds
+
+FORMAT_DEFAULT = 'fl+ftl'
+
+FORMAT_SEPARATOR = '+'
+
+TEMPLATES_DEFAULT = {
+    'f': bold('[{}]'),
+    'a': '<{}>',
+    'd': '{}',
+    'g': '{}',
+    'l': bold('→') + ' {}',
+    'p': '({})',
+    's': '{}',
+    't': '{}',
+    'y': bold('→') + ' {}',
+}
 
 COMMANDS = {
     'add': {
@@ -101,7 +117,6 @@ COMMANDS = {
     }
 }
 
-
 MESSAGES = {
     'added_feed_formater_for_feed':
         'added feed formater for feed "{}"',
@@ -156,11 +171,14 @@ MESSAGES = {
 
 class RSSSection(StaticSection):
     feeds = ListAttribute('feeds', default = '')
+    formats = ListAttribute('formats', default = FORMAT_DEFAULT)
 
 
 def configure(config):
     config.define_section('rss', RSSSection)
     config.rss.configure_setting('feeds', 'comma separated strings consisting of channel, name, url and an optional format separated by spaces')
+    config.rss.configure_setting('formats', 'comma separated strings consisting hash and output fields separated by {}'.format(FORMAT_SEPARATOR))
+    config.rss.configure_setting('templates', 'comma separated strings consisting format field and template string separated by spaces'.format(FORMAT_SEPARATOR))
 
 
 def setup(bot):
