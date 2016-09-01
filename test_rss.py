@@ -175,8 +175,8 @@ class MockFeedReader:
         feed = feedparser.parse(self.url)
         return feed
 
-    def get_shorturl(self, url):
-        return 'mock_tinyurl'
+    def get_tinyurl(self, url):
+        return 'https://tinyurl.com/govvpmm'
 
 
 def test_rss_too_many_parameters(bot):
@@ -670,6 +670,21 @@ def test_FeedFormater_check_format_duplicate_field_output(feedreader_feed_valid)
     format = 'l+tll'
     ff = rss.FeedFormater(feedreader_feed_valid, format)
     assert format != ff.get_format()
+
+
+def test_FeedFormater_check_format_tinyurl(feedreader_feed_valid):
+    format = 'fy+ty'
+    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    assert format == ff.get_format()
+
+
+def test_FeedFormater_check_tinyurl_output(feedreader_feed_valid):
+    format = 'fy+ty'
+    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    item = feedreader_feed_valid.get_feed().entries[0]
+    post = ff.get_post('feed1', item)
+    expected = 'Title 3 \x02→\x02 https://tinyurl.com/govvpmm'
+    assert expected == post
 
 
 def test_RingBuffer_append():
