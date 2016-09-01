@@ -101,6 +101,10 @@ A *format* string defines which feed item fields be be hashed, i.e. when two fee
         <td>t</td>
          <td>title</td>
     </tr>
+    <tr>
+        <td>u</td>
+         <td>titnyurl</td>
+    </tr>
 </table>
 
 The feedname is a custom name specified as a parameter to *.rssadd* an not a feed item field. guid is a unique identifiert and published is the date and time of publication.

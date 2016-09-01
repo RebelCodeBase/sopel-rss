@@ -176,17 +176,12 @@ class MockFeedReader:
         return feed
 
     def get_shorturl(self, url):
-        return 'mock_shorturl'
+        return 'mock_tinyurl'
 
 
 def test_rss_too_many_parameters(bot):
-    rss.__rss(bot, ['add', '#channel', 'feedname', FEED_VALID, 'fourth_argument'])
+    rss.__rss(bot, ['add', '#channel', 'feedname', FEED_VALID, 'fl+ftl', 'fifth_argument'])
     expected = rss.COMMANDS['add']['synopsis'].format(bot.config.core.prefix) + '\n'
-    for message in rss.COMMANDS['add']['helptext']:
-        expected += message + '\n'
-    expected += rss.MESSAGES['examples'] + '\n'
-    for message in rss.COMMANDS['add']['examples']:
-        expected += message.format(bot.config.core.prefix) + '\n'
     assert expected == bot.output
 
 
@@ -209,7 +204,7 @@ def test_rss_feed_delete(bot):
 
 def test_rss_fields_get(bot):
     rss.__rss(bot, ['fields', 'feed1'])
-    expected = rss.MESSAGES['fields_of_feed_are'].format('feed1', 'fadglpst') + '\n'
+    expected = rss.MESSAGES['fields_of_feed_are'].format('feed1', 'fadglpsty') + '\n'
     assert expected == bot.output
 
 
@@ -288,7 +283,7 @@ def test_rssFields_get(bot):
     rss.__rssAdd(bot, ['add', '#channel', 'feedname', FEED_VALID, 'fltp+atl'])
     bot.output = ''
     rss.__rssFields(bot, ['fields', 'feedname'])
-    expected = rss.MESSAGES['fields_of_feed_are'].format('feedname', 'fadglpst') + '\n'
+    expected = rss.MESSAGES['fields_of_feed_are'].format('feedname', 'fadglpsty') + '\n'
     assert expected == bot.output
 
 
@@ -621,7 +616,7 @@ def test_FeedFormater_get_format_default(feedreader_feed_valid):
 def test_FeedFormater_get_fields_feed_valid(feedreader_feed_valid):
     ff = rss.FeedFormater(feedreader_feed_valid)
     fields = ff.get_fields()
-    assert 'fadglpst' == fields
+    assert 'fadglpsty' == fields
 
 
 def test_FeedFormater_get_fields_feed_item_neither_title_nor_description(feedreader_feed_item_neither_title_nor_description):

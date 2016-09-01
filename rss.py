@@ -9,6 +9,8 @@ import feedparser
 import hashlib
 import shlex
 import time
+import urllib.parse
+import urllib.request
 
 MAX_HASHES_PER_FEED = 300
 UPDATE_INTERVAL = 60 # seconds
@@ -37,7 +39,7 @@ COMMANDS = {
     'fields': {
         'synopsis': 'synopsis: {}rss fields <name>',
         'helptext': ['list all feed item fields available for the feed identified by <name>.',
-                     'f: feedname, a: author, d: description, g: guid, l: link, p: published, s: summary, t: title'],
+                     'f: feedname, a: author, d: description, g: guid, l: link, p: published, s: summary, t: title, y: tinyurl'],
         'examples': ['{}rss fields guardian'],
         'required': 1,
         'optional': 0,
@@ -199,7 +201,7 @@ def __rss(bot, args):
         bot.say(COMMANDS[cmd]['synopsis'].format(bot.config.core.prefix))
         return
 
-    if args_count > 4:
+    if args_count > 5:
         globals()[COMMANDS['help']['function']](bot, ['help', args[0]])
         return
 
@@ -665,7 +667,7 @@ class FeedFormater:
             'p': saneitem['published'],
             's': saneitem['summary'],
             't': saneitem['title'],
-            'u': self.feedreader.get_shorturl(saneitem['link']),
+            'y': saneitem['link'],
         }
 
         signature = ''
@@ -692,6 +694,9 @@ class FeedFormater:
         pubtime = ''
         if 'p' in self.output:
             pubtime = time.strftime('%Y-%m-%d %H:%M', item['published_parsed'])
+        shorturl = ''
+        if 'y' in self.output:
+            shorturl = self.feedreader.get_tinyurl(saneitem['link'])
 
         legend = {
             'f': bold('[' + feedname + ']'),
@@ -702,7 +707,7 @@ class FeedFormater:
             'p': '(' + pubtime + ')',
             's': '«' + saneitem['summary']+ '»',
             't': saneitem['title'],
-            'u': bold('→') + ' ' + self.feedreader.get_shorturl(saneitem['link']),
+            'y': bold('→') + ' ' + shorturl,
         }
 
         post = ''
@@ -752,6 +757,8 @@ class FeedFormater:
             fields += 's'
         if hasattr(item, 'title'):
             fields += 't'
+        if hasattr(item, 'link'):
+            fields += 'y'
 
         return fields
 
@@ -837,8 +844,13 @@ class FeedReader:
         except:
             return False
 
-    def get_shorturl(self, url):
-        return url
+    def get_tinyurl(self, url):
+        tinyurlapi = 'https://tinyurl.com/api-create.php'
+        data = urllib.parse.urlencode({'url': url}).encode("utf-8")
+        req = urllib.request.Request(tinyurlapi, data)
+        response = urllib.request.urlopen(req)
+        tinyurl = response.read().decode('utf-8')
+        return tinyurl
 
 
 # Implementing a ring buffer
