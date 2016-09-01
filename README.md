@@ -102,7 +102,7 @@ A *format* string defines which feed item fields be be hashed, i.e. when two fee
          <td>title</td>
     </tr>
     <tr>
-        <td>u</td>
+        <td>y</td>
          <td>titnyurl</td>
     </tr>
 </table>
