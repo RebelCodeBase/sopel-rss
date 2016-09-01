@@ -103,11 +103,11 @@ A *format* string defines which feed item fields be be hashed, i.e. when two fee
     </tr>
     <tr>
         <td>y</td>
-         <td>titnyurl</td>
+         <td>tinyurl</td>
     </tr>
 </table>
 
-The feedname is a custom name specified as a parameter to *.rssadd* an not a feed item field. guid is a unique identifiert and published is the date and time of publication.
+The feedname is a custom name specified as a parameter to *.rssadd* an not a feed item field. guid is a unique identifiert and published is the date and time of publication. tinyurl will work like the field link but it will shorten the url through [tinyurl](https://www.tinyurl.com/) first.
 
 Example: *fl+tl*
 
