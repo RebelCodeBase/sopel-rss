@@ -170,8 +170,9 @@ MESSAGES = {
 
 
 class RSSSection(StaticSection):
-    feeds = ListAttribute('feeds', default = '')
-    formats = ListAttribute('formats', default = FORMAT_DEFAULT)
+    feeds = ListAttribute('feeds')
+    formats = ListAttribute('formats')
+    templates = ListAttribute('templates')
 
 
 def configure(config):
@@ -266,7 +267,7 @@ def __rssFields(bot, args):
         bot.say(message)
         return
 
-    fields = bot.memory['rss']['formats'][feedname].get_fields()
+    fields = bot.memory['rss']['formats']['feeds'][feedname].get_fields()
     message = MESSAGES['fields_of_feed_are'].format(feedname, fields)
     bot.say(message)
 
@@ -279,7 +280,7 @@ def __rssFormat(bot, args):
         bot.say(message)
         return
 
-    format_new = bot.memory['rss']['formats'][feedname].set_format(format)
+    format_new = bot.memory['rss']['formats']['feeds'][feedname].set_format(format)
 
     if format == format_new:
         message = MESSAGES['format_of_feed_has_been_set_to'].format(feedname, format_new)
@@ -373,17 +374,21 @@ def __configDefine(bot):
     bot.memory['rss']['feeds'] = dict()
     bot.memory['rss']['hashes'] = dict()
     bot.memory['rss']['formats'] = dict()
+    bot.memory['rss']['formats']['feeds'] = dict()
+    bot.memory['rss']['formats']['default'] = list()
+    bot.memory['rss']['templates'] = dict()
+    bot.memory['rss']['templates']['default'] = dict()
     return bot
 
 
 # read config from disk to memory
 def __configRead(bot):
 
-    # read 'feeds' from config file
+    # read feeds from config file
     if bot.config.rss.feeds and bot.config.rss.feeds[0]:
         for feed in bot.config.rss.feeds:
 
-            # split feed line by spaces
+            # split feed by spaces
             atoms = feed.split(' ')
 
             channel = atoms[0]
@@ -395,8 +400,38 @@ def __configRead(bot):
             except IndexError:
                 format = ''
 
+            message = MESSAGES['added_rss_feed_to_channel_with_url'].format(feedname, channel, url, format)
+            print(message)
+
             __feedAdd(bot, channel, feedname, url, format)
             __hashesRead(bot, feedname)
+
+    fields = ''
+    for f in TEMPLATES_DEFAULT:
+        fields += f
+
+    print('fields: ' + fields)
+
+    print('bot.config.rss.formats: ')
+    print(bot.config.rss.formats)
+
+    # read default formats from config file
+    if bot.config.rss.formats and bot.config.rss.formats[0]:
+        for format in bot.config.rss.formats:
+
+            # check if format contains only valid fields
+            if not set(format) <= set(fields):
+                continue
+
+            bot.memory['rss']['formats']['default'].append(format)
+
+    print(bot.config.rss.formats)
+    print(bot.memory['rss']['formats']['default'])
+
+    # read default templates from config file
+    if bot.config.rss.templates and bot.config.rss.templates[0]:
+        for template in bot.config.rss.templates:
+            pass
 
     message = 'read config from disk'
     LOGGER.debug(message)
@@ -404,7 +439,7 @@ def __configRead(bot):
 
 # save config from memory to disk
 def __configSave(bot):
-    if not bot.memory['rss']['feeds']:
+    if not bot.memory['rss']['feeds'] or not bot.memory['rss']['formats'] or not bot.memory['rss']['templates']:
         return
 
     # we want no more than MAX_HASHES in our database
@@ -415,8 +450,8 @@ def __configSave(bot):
     feeds = []
     for feedname, feed in bot.memory['rss']['feeds'].items():
         newfeed = feed['channel'] + ' ' + feed['name'] + ' ' + feed['url']
-        format = bot.memory['rss']['formats'][feedname].get_format()
-        format_default = bot.memory['rss']['formats'][feedname].get_default()
+        format = bot.memory['rss']['formats']['feeds'][feedname].get_format()
+        format_default = bot.memory['rss']['formats']['feeds'][feedname].get_default()
         if format != format_default:
             newfeed += ' ' + format
         feeds.append(newfeed)
@@ -533,7 +568,7 @@ def __feedAdd(bot, channel, feedname, url, format=''):
 
     # create new FeedFormatter to handle feed hashing and output
     feedreader = FeedReader(url)
-    bot.memory['rss']['formats'][feedname] = FeedFormater(feedreader, format)
+    bot.memory['rss']['formats']['feeds'][feedname] = FeedFormater(feedreader, format)
     message = MESSAGES['added_feed_formater_for_feed'].format(feedname)
     LOGGER.debug(message)
 
@@ -605,7 +640,7 @@ def __feedExists(bot, feedname):
 
 def __feedList(bot, feedname):
     feed = bot.memory['rss']['feeds'][feedname]
-    format_feed = bot.memory['rss']['formats'][feedname].get_format()
+    format_feed = bot.memory['rss']['formats']['feeds'][feedname].get_format()
     bot.say('{} {} {} {}'.format(feed['channel'], feed['name'], feed['url'], format_feed))
 
 
@@ -622,13 +657,13 @@ def __feedUpdate(bot, feedreader, feedname, chatty):
 
     # bot.say new or all items
     for item in reversed(feed['entries']):
-        hash = bot.memory['rss']['formats'][feedname].get_hash(feedname, item)
+        hash = bot.memory['rss']['formats']['feeds'][feedname].get_hash(feedname, item)
         new_item = not hash in bot.memory['rss']['hashes'][feedname].get()
         if chatty or new_item:
             if new_item:
                 bot.memory['rss']['hashes'][feedname].append(hash)
                 __dbSaveHashToDatabase(bot, feedname, hash)
-            message = bot.memory['rss']['formats'][feedname].get_post(feedname, item)
+            message = bot.memory['rss']['formats']['feeds'][feedname].get_post(feedname, item)
             LOGGER.debug(message)
             bot.say(message, channel)
 

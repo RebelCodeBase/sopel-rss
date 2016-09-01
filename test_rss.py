@@ -109,7 +109,7 @@ def __fixtureBotAddData(bot, id, url):
     bot.memory['rss']['feeds']['feed'+id] = {'channel': '#channel' + id, 'name': 'feed' + id, 'url': url}
     bot.memory['rss']['hashes']['feed'+id] = rss.RingBuffer(100)
     feedreader = MockFeedReader(FEED_VALID)
-    bot.memory['rss']['formats']['feed'+id] = rss.FeedFormater(feedreader)
+    bot.memory['rss']['formats']['feeds']['feed'+id] = rss.FeedFormater(feedreader)
     sql_create_table = 'CREATE TABLE ' + rss.__digestTablename('feed'+id) + ' (id INTEGER PRIMARY KEY, hash VARCHAR(32) UNIQUE)'
     bot.db.execute(sql_create_table)
     bot.channels = ['#channel'+id]
@@ -125,6 +125,12 @@ def bot(request):
 
 @pytest.fixture(scope="function")
 def bot_config_get_feed(request):
+    bot = __fixtureBotSetup(request)
+    return bot
+
+
+@pytest.fixture(scope="function")
+def bot_config_read(request):
     bot = __fixtureBotSetup(request)
     return bot
 
@@ -210,7 +216,7 @@ def test_rss_fields_get(bot):
 
 def test_rss_format_set(bot):
     rss.__rss(bot, ['format', 'feed1', 'asl+als'])
-    format_new = bot.memory['rss']['formats']['feed1'].get_format()
+    format_new = bot.memory['rss']['formats']['feeds']['feed1'].get_format()
     assert 'asl+als' == format_new
 
 
@@ -294,24 +300,24 @@ def test_rssFormat_feed_nonexistent(bot):
 
 
 def test_rssFormat_format_unchanged(bot):
-    format_old = bot.memory['rss']['formats']['feed1'].get_format()
+    format_old = bot.memory['rss']['formats']['feeds']['feed1'].get_format()
     rss.__rssFormat(bot, ['format', 'feed1', 'abcd+efgh'])
-    format_new = bot.memory['rss']['formats']['feed1'].get_format()
+    format_new = bot.memory['rss']['formats']['feeds']['feed1'].get_format()
     assert format_old == format_new
     expected = rss.MESSAGES['consider_rss_fields'].format(bot.config.core.prefix, 'feed1') + '\n'
     assert expected == bot.output
 
 
 def test_rssFormat_format_changed(bot):
-    format_old = bot.memory['rss']['formats']['feed1'].get_format()
+    format_old = bot.memory['rss']['formats']['feeds']['feed1'].get_format()
     rss.__rssFormat(bot, ['format', 'feed1', 'asl+als'])
-    format_new = bot.memory['rss']['formats']['feed1'].get_format()
+    format_new = bot.memory['rss']['formats']['feeds']['feed1'].get_format()
     assert format_old != format_new
 
 
 def test_rssFormat_format_set(bot):
     rss.__rssFormat(bot, ['format', 'feed1', 'asl+als'])
-    format_new = bot.memory['rss']['formats']['feed1'].get_format()
+    format_new = bot.memory['rss']['formats']['feeds']['feed1'].get_format()
     assert 'asl+als' == format_new
 
 
@@ -426,8 +432,11 @@ def test_configDefine_hashes():
 def test_configDefine_formats():
     bot = MockSopel('Sopel')
     bot = rss.__configDefine(bot)
-    assert type(bot.memory['rss']['formats']) == dict
+    assert type(bot.memory['rss']['formats']['feeds']) == dict
 
+
+def test_configRead(bot_config_read):
+    pass
 
 def test_configSave_writes(bot_config_save):
     rss.__configSave(bot_config_save)
