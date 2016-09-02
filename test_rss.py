@@ -436,12 +436,21 @@ def test_configRead_format_default(bot_void):
     assert expected == formats
 
 
-def test_configRead_format_custom(bot_void):
+def test_configRead_format_custom_valid(bot_void):
     formats_custom = ['al+fpatl','y+fty']
     bot_void.config.rss.formats = formats_custom
     rss.__configRead(bot_void)
     formats = bot_void.memory['rss']['formats']['default']
     assert formats_custom == formats
+
+
+def test_configRead_format_custom_invalid(bot_void):
+    formats_custom = ['al+fpatl','yy+fty']
+    bot_void.config.rss.formats = formats_custom
+    rss.__configRead(bot_void)
+    formats = bot_void.memory['rss']['formats']['default']
+    expected = ['al+fpatl']
+    assert expected == formats
 
 
 def test_configRead_template_default(bot_void):
@@ -456,12 +465,19 @@ def test_configRead_template_custom(bot_void):
     bot_void.config.rss.templates = templates_custom
     rss.__configRead(bot_void)
     templates = bot_void.memory['rss']['templates']['default']
-    expected = rss.TEMPLATES_DEFAULT
+    expected = dict()
+    for t in rss.TEMPLATES_DEFAULT:
+        expected[t] = rss.TEMPLATES_DEFAULT[t]
     expected['t'] = '>>{}<<'
     assert expected == templates
 
 
 def test_configSave_writes(bot):
+    bot.memory['rss']['formats']['default'] = ['ft+ftpal']
+    for t in rss.TEMPLATES_DEFAULT:
+        bot.memory['rss']['templates']['default'][t] = rss.TEMPLATES_DEFAULT[t]
+    bot.memory['rss']['templates']['default']['a'] = '<{}>'
+    bot.memory['rss']['templates']['default']['t'] = '<<{}>>'
     rss.__configSave(bot)
     expected = '''[core]
 owner = '''+'''
@@ -471,8 +487,8 @@ db_filename = ''' + bot.db.filename + '''
 
 [rss]
 feeds = #channel1 feed1 http://www.site1.com/feed
-formats = '''+'''
-templates = '''+'''
+formats = ft+ftpal
+templates = t <<{}>>
 
 '''
     f = open(bot.config.filename, 'r')

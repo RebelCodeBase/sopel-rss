@@ -414,6 +414,8 @@ def __configRead(bot):
             # check if format contains only valid fields
             if not set(format) <= set(fields + FORMAT_SEPARATOR):
                 continue
+            if not FeedFormater(FeedReader('')).is_format_valid(format, FORMAT_SEPARATOR, fields):
+                continue
             bot.memory['rss']['formats']['default'].append(format)
 
     if not bot.memory['rss']['formats']['default']:
@@ -456,13 +458,24 @@ def __configSave(bot):
             bot.config.core.channels += [feed['channel']]
 
     # flatten formats for config file
-    formats = [','.join(bot.memory['rss']['formats']['default'])]
-    bot.config.rss.formats = formats
+    formats = list()
+    for format in bot.memory['rss']['formats']['default']:
+
+        # only save formats that differ from the default
+        if not format == FORMAT_DEFAULT:
+            formats.append(format)
+
+    bot.config.rss.formats = [','.join(formats)]
 
     # flatten templates for config file
     templates = list()
-    for field, template in bot.memory['rss']['templates']['default']:
-        templates.append(field + ' ' + template)
+    for field in bot.memory['rss']['templates']['default']:
+        template = bot.memory['rss']['templates']['default'][field]
+
+        #only save template that differ from the default
+        if not TEMPLATES_DEFAULT[field] == template:
+            templates.append(field + ' ' + template)
+
     bot.config.rss.templates = [','.join(templates)]
 
     try:
@@ -771,21 +784,21 @@ class FeedFormater:
 
         return post[:-1]
 
+    def is_format_valid(self, format, separator, fields = ''):
+        hashed, output, remainder = self.__formatSplit(format, separator)
+        return(self.__formatValid(hashed, output, remainder, fields))
+
     def set_format(self, format_new=''):
         format_sanitized = self.__formatSanitize(format_new)
         if format_new and format_new != format_sanitized:
             return self.format
         self.format = format_sanitized
-        format_splitted = self.format.split(self.separator)
-        self.hashed = format_splitted[0]
-        self.output = format_splitted[1]
+        self.hashed, self.output, self.remainder = self.__formatSplit(self.format, self.separator)
         return self.format
 
     def set_minimal(self):
         self.format = self.get_minimal()
-        format_splitted = self.format.split(self.separator)
-        self.hashed = format_splitted[0]
-        self.output = format_splitted[1]
+        self.hashed, self.output, self.remainder = self.__formatSplit(self.format, self.separator)
         return self.format
 
     def __formatGetFields(self, feedreader):
@@ -821,23 +834,29 @@ class FeedFormater:
         if not format:
             format = self.get_default()
 
-        format_splitted = format.split(self.separator)
-        hashed = format_splitted[0]
-        try:
-            output = format_splitted[1]
-        except IndexError:
-            output = ''
+        hashed, output, remainder = self.__formatSplit(format, self.separator)
 
-        try:
-            remainder = format_splitted[2]
-        except IndexError:
-            remainder = ''
         if not self.__formatValid(hashed, output, remainder):
             return self.get_minimal()
 
         return hashed + self.separator + output
 
-    def __formatValid(self, hashed, output, remainder):
+    def __formatSplit(self, format, separator):
+        format_split = str(format).split(separator)
+        hashed = format_split[0]
+        try:
+            output = format_split[1]
+        except IndexError:
+            output = ''
+
+        try:
+            remainder = format_split[2]
+        except IndexError:
+            remainder = ''
+
+        return hashed, output, remainder
+
+    def __formatValid(self, hashed, output, remainder, fields = ''):
 
         # check format for duplicate separators
         if remainder:
@@ -859,7 +878,8 @@ class FeedFormater:
         if output == 'f':
             return False
 
-        fields = self.__formatGetFields(self.feedreader)
+        if not fields:
+            fields = self.__formatGetFields(self.feedreader)
 
         # check hashed has only valid fields
         for f in hashed:
@@ -908,7 +928,7 @@ class FeedReader:
         return tinyurl
 
 
-# Implementing a ring buffer
+    # Implementing a ring buffer
 # https://www.safaribooksonline.com/library/view/python-cookbook/0596001673/ch05s19.html
 class RingBuffer:
     """ class that implements a not-yet-full buffer """
