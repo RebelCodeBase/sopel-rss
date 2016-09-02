@@ -56,13 +56,25 @@ Calls the internal function which updates the feed every minute. This command is
 
 ## Options
 
-The following options can be set in the configuration file. Be aware that the bot mustn't be running when editing the configuration file. Otherwise, your edits may be overwritten!
+The following options can be set in the configuration file. It will be read when the bot is started or when the owner or an admin issues the command *.reload rss* in a query with the bot. Be aware that the bot mustn't be running when editing the configuration file. Otherwise, your edits may be overwritten!
 
-**Synopsis:** *feeds=\<channel1\> \<name1\> \<url1\> [\<format1\>][,\<channel2\> \<name2\> \<url2\> [\<format2\>]]...*
+### feeds
 
-*Default:* empty
+**Synopsis:** *feeds=\<channel1\> \<name1\> \<url1\> [\<format1\>],\<channel2\> \<name2\> \<url2\> [\<format2\>]...*
 
-This is the main data of the bot which will be read when the bot is started or when the owner or an admin issues the command *.reload rss* in a query with the bot.
+Comma separated list of feed definitions with channel, feedname, url and optionally format separated by blanks.
+
+### formats
+
+**Synopsis:** *formats = \<format1\>,\<format2\>,...*
+
+Comma separated list of default formats which will be used if the fields of the feed fit the format.
+
+### templates
+
+**Synopsis:** *templates = \<field1\> \<template1\>,\<field1\> \<template1\>...*
+
+Comma separated list of template strings which will override the default template strings. Curly braces will be replaced by the actual string.
 
 ## Formats
 
@@ -70,44 +82,58 @@ A *format* string defines which feed item fields be be hashed, i.e. when two fee
 
 <table>
     <tr>
-        <td>f</td>
+        <th>caption</th>
+        <th>field</th>
+        <th>template</th>
+    </tr>
+    <tr>
         <td>feedname</td>
+        <td>f</td>
+        <td>\x02[{}]\x02</td>
     </tr>
     <tr>
+        <td>author</td>
         <td>a</td>
-         <td>author</td>
+        <td><{}></td>
     </tr>
     <tr>
-        <td>d</td>
         <td>description</td>
+        <td>d</td>
+        <td>{}</td>
     </tr>
     <tr>
+        <td>guid</td>
         <td>g</td>
-         <td>guid</td>
+        <td>{}</td>
     </tr>
     <tr>
+        <td>link</td>
         <td>l</td>
-         <td>link</td>
+        <td>\x02→\x02 {}</td>         
     </tr>
     <tr>
+        <td>published</td>
         <td>p</td>
-         <td>published</td>
+        <td>({})</td>
     </tr>
     <tr>
+        <td>summary</td>
         <td>s</td>
-         <td>summary</td>
+        <td>{}</td>
     </tr>
     <tr>
+        <td>title</td>
         <td>t</td>
-         <td>title</td>
+        <td>{}</td>
     </tr>
     <tr>
+        <td>tinyurl</td>
         <td>y</td>
-         <td>tinyurl</td>
+        <td>\x02→\x02 {}</td>
     </tr>
 </table>
 
-The feedname is a custom name specified as a parameter to *.rssadd* an not a feed item field. guid is a unique identifiert and published is the date and time of publication. tinyurl will work like the field link but it will shorten the url through [tinyurl](https://www.tinyurl.com/) first.
+The feedname is a custom name specified as a parameter to *.rss add* an not a feed item field. guid is a unique identifiert and published is the date and time of publication. tinyurl will work like the field link but it will shorten the url through [tinyurl](https://www.tinyurl.com/) first.
 
 Example: *fl+tl*
 
