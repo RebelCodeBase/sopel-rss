@@ -737,6 +737,24 @@ def test_FeedFormater_check_tinyurl_output(bot, feedreader_feed_valid):
     assert expected == post
 
 
+def test_FeedFormater_check_template_valid(bot):
+    template = '{}'
+    result = rss.FeedFormater(bot, rss.FeedReader('')).is_template_valid(template)
+    assert True == result
+
+
+def test_FeedFormater_check_template_invalid_no_curly_braces(bot):
+    template = ''
+    result = rss.FeedFormater(bot, rss.FeedReader('')).is_template_valid(template)
+    assert False == result
+
+
+def test_FeedFormater_check_template_invalid_duplicate_curly_braces(bot):
+    template = '{}{}'
+    result = rss.FeedFormater(bot, rss.FeedReader('')).is_template_valid(template)
+    assert False == result
+
+
 def test_RingBuffer_append():
     rb = rss.RingBuffer(3)
     assert rb.get() == []

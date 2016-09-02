@@ -425,7 +425,8 @@ def __configRead(bot):
     if bot.config.rss.templates and bot.config.rss.templates[0]:
         for template in bot.config.rss.templates:
             atoms = template.split(' ')
-            bot.memory['rss']['templates']['default'][atoms[0]] = atoms[1]
+            if FeedFormater(bot, FeedReader('')).is_template_valid(atoms[1]):
+                bot.memory['rss']['templates']['default'][atoms[0]] = atoms[1]
 
     message = 'read config from disk'
     LOGGER.debug(message)
@@ -785,7 +786,8 @@ class FeedFormater:
             templates[t] = TEMPLATES_DEFAULT[t]
 
         for t in self.bot.memory['rss']['templates']['default']:
-            templates[t] = self.bot.memory['rss']['templates']['default'][t]
+            if self.is_template_valid(self.bot.memory['rss']['templates']['default'][t]):
+                templates[t] = self.bot.memory['rss']['templates']['default'][t]
 
         post = ''
         for f in self.output:
@@ -796,6 +798,14 @@ class FeedFormater:
     def is_format_valid(self, format, separator, fields = ''):
         hashed, output, remainder = self.__formatSplit(format, separator)
         return(self.__formatValid(hashed, output, remainder, fields))
+
+    def is_template_valid(self, template):
+
+        # check if template contains exactly one pair of curly braces
+        if template.count('{}') != 1:
+            return False
+
+        return True
 
     def set_format(self, format_new=''):
         format_sanitized = self.__formatSanitize(format_new)
