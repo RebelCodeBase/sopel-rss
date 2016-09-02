@@ -414,7 +414,7 @@ def __configRead(bot):
             # check if format contains only valid fields
             if not set(format) <= set(fields + FORMAT_SEPARATOR):
                 continue
-            if not FeedFormater(FeedReader('')).is_format_valid(format, FORMAT_SEPARATOR, fields):
+            if not FeedFormater(bot, FeedReader('')).is_format_valid(format, FORMAT_SEPARATOR, fields):
                 continue
             bot.memory['rss']['formats']['default'].append(format)
 
@@ -583,7 +583,7 @@ def __feedAdd(bot, channel, feedname, url, format=''):
 
     # create new FeedFormatter to handle feed hashing and output
     feedreader = FeedReader(url)
-    bot.memory['rss']['formats']['feeds'][feedname] = FeedFormater(feedreader, format)
+    bot.memory['rss']['formats']['feeds'][feedname] = FeedFormater(bot, feedreader, format)
     message = MESSAGES['added_feed_formater_for_feed'].format(feedname)
     LOGGER.debug(message)
 
@@ -700,15 +700,17 @@ class FeedFormater:
 
     LOGGER = get_logger(__name__)
 
-    def __init__(self, feedreader, format=''):
+    def __init__(self, bot, feedreader, format=''):
+        self.bot = bot
         self.feedreader = feedreader
         self.separator = FORMAT_SEPARATOR
-        self.FORMAT_DEFAULT = FORMAT_DEFAULT
         self.set_minimal()
         self.set_format(format)
 
     def get_default(self):
-        return self.FORMAT_DEFAULT
+        for format in self.bot.memory['rss']['formats']['default']:
+            return format
+        return FORMAT_DEFAULT
 
     def get_format(self):
         return self.format
@@ -767,20 +769,27 @@ class FeedFormater:
             shorturl = self.feedreader.get_tinyurl(saneitem['link'])
 
         legend = {
-            'f': bold('[' + feedname + ']'),
-            'a': '<' + saneitem['author'] + '>',
-            'd': '|' + saneitem['description'] + '|',
-            'g': '{' + saneitem['guid'] + '}',
-            'l': bold('→') + ' ' + saneitem['link'],
-            'p': '(' + pubtime + ')',
-            's': '«' + saneitem['summary']+ '»',
+            'f': feedname,
+            'a': saneitem['author'],
+            'd': saneitem['description'],
+            'g': saneitem['guid'],
+            'l': saneitem['link'],
+            'p': pubtime,
+            's': saneitem['summary'],
             't': saneitem['title'],
-            'y': bold('→') + ' ' + shorturl,
+            'y': shorturl,
         }
+
+        templates = dict()
+        for t in TEMPLATES_DEFAULT:
+            templates[t] = TEMPLATES_DEFAULT[t]
+
+        for t in self.bot.memory['rss']['templates']['default']:
+            templates[t] = self.bot.memory['rss']['templates']['default'][t]
 
         post = ''
         for f in self.output:
-            post += legend.get(f, '') + ' '
+            post += templates[f].format(legend.get(f, '')) + ' '
 
         return post[:-1]
 
@@ -831,15 +840,27 @@ class FeedFormater:
         return fields
 
     def __formatSanitize(self, format):
-        if not format:
-            format = self.get_default()
 
-        hashed, output, remainder = self.__formatSplit(format, self.separator)
+        # check if format is valid
+        if format:
+            hashed, output, remainder = self.__formatSplit(format, self.separator)
+            if self.__formatValid(hashed, output, remainder):
+                return hashed + self.separator + output
 
-        if not self.__formatValid(hashed, output, remainder):
-            return self.get_minimal()
+        # check in turn if each default format is valid
+        for format in self.bot.memory['rss']['formats']['default']:
+            hashed, output, remainder = self.__formatSplit(format, self.separator)
+            if self.__formatValid(hashed, output, remainder):
+                return hashed + self.separator + output
 
-        return hashed + self.separator + output
+        # check if global default format is valid
+        hashed, output, remainder = self.__formatSplit(FORMAT_DEFAULT, self.separator)
+        if self.__formatValid(hashed, output, remainder):
+            return hashed + self.separator + output
+
+        # else return the minimal valid format
+        return self.get_minimal()
+
 
     def __formatSplit(self, format, separator):
         format_split = str(format).split(separator)

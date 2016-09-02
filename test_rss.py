@@ -109,7 +109,7 @@ def __fixtureBotAddData(bot, id, url):
     bot.memory['rss']['feeds']['feed'+id] = {'channel': '#channel' + id, 'name': 'feed' + id, 'url': url}
     bot.memory['rss']['hashes']['feed'+id] = rss.RingBuffer(100)
     feedreader = MockFeedReader(FEED_VALID)
-    bot.memory['rss']['formats']['feeds']['feed'+id] = rss.FeedFormater(feedreader)
+    bot.memory['rss']['formats']['feeds']['feed'+id] = rss.FeedFormater(bot, feedreader)
     sql_create_table = 'CREATE TABLE ' + rss.__digestTablename('feed'+id) + ' (id INTEGER PRIMARY KEY, hash VARCHAR(32) UNIQUE)'
     bot.db.execute(sql_create_table)
     bot.channels = ['#channel'+id]
@@ -312,9 +312,9 @@ def test_rssFormat_format_output(bot_rssUpdate):
     rss.__rssFormat(bot_rssUpdate, ['format', 'feed1', 'fadglpst+fadglpst'])
     rss.__rssUpdate(bot_rssUpdate, ['update'])
     expected = rss.MESSAGES['format_of_feed_has_been_set_to'].format('feed1', 'fadglpst+fadglpst') + '''
-\x02[feed1]\x02 <Author 1> |<p>Description of article 1</p>| {1 at http://www.site1.com/} \x02→\x02 http://www.site1.com/article1 (2016-08-21 01:10) «<p>Description of article 1</p>» Title 1
-\x02[feed1]\x02 <Author 2> |<p>Description of article 2</p>| {2 at http://www.site1.com/} \x02→\x02 http://www.site1.com/article2 (2016-08-22 02:20) «<p>Description of article 2</p>» Title 2
-\x02[feed1]\x02 <Author 3> |<p>Description of article 3</p>| {3 at http://www.site1.com/} \x02→\x02 http://www.site1.com/article3 (2016-08-23 03:30) «<p>Description of article 3</p>» Title 3
+\x02[feed1]\x02 <Author 1> <p>Description of article 1</p> 1 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article1 (2016-08-21 01:10) <p>Description of article 1</p> Title 1
+\x02[feed1]\x02 <Author 2> <p>Description of article 2</p> 2 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article2 (2016-08-22 02:20) <p>Description of article 2</p> Title 2
+\x02[feed1]\x02 <Author 3> <p>Description of article 3</p> 3 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article3 (2016-08-23 03:30) <p>Description of article 3</p> Title 3
 '''
     assert expected == bot_rssUpdate.output
 
@@ -486,7 +486,7 @@ homedir = ''' + bot.config.homedir + '''
 db_filename = ''' + bot.db.filename + '''
 
 [rss]
-feeds = #channel1 feed1 http://www.site1.com/feed
+feeds = #channel1 feed1 http://www.site1.com/feed fl+ftl
 formats = ft+ftpal
 templates = t <<{}>>
 
@@ -653,84 +653,84 @@ def test_hashesRead(bot, feedreader_feed_valid):
     assert expected == hashes
 
 
-def test_FeedFormater_get_format_custom(feedreader_feed_valid):
-    ff = rss.FeedFormater(feedreader_feed_valid, 'ta+ta')
+def test_FeedFormater_get_format_custom(bot, feedreader_feed_valid):
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, 'ta+ta')
     assert 'ta+ta' == ff.get_format()
 
 
-def test_FeedFormater_get_format_default(feedreader_feed_valid):
-    ff = rss.FeedFormater(feedreader_feed_valid)
+def test_FeedFormater_get_format_default(bot, feedreader_feed_valid):
+    ff = rss.FeedFormater(bot, feedreader_feed_valid)
     assert ff.get_default() == ff.get_format()
 
 
-def test_FeedFormater_get_fields_feed_valid(feedreader_feed_valid):
-    ff = rss.FeedFormater(feedreader_feed_valid)
+def test_FeedFormater_get_fields_feed_valid(bot, feedreader_feed_valid):
+    ff = rss.FeedFormater(bot, feedreader_feed_valid)
     fields = ff.get_fields()
     assert 'fadglpsty' == fields
 
 
-def test_FeedFormater_get_fields_feed_item_neither_title_nor_description(feedreader_feed_item_neither_title_nor_description):
-    ff = rss.FeedFormater(feedreader_feed_item_neither_title_nor_description)
+def test_FeedFormater_get_fields_feed_item_neither_title_nor_description(bot, feedreader_feed_item_neither_title_nor_description):
+    ff = rss.FeedFormater(bot, feedreader_feed_item_neither_title_nor_description)
     fields = ff.get_fields()
     assert 'd' not in fields and 't' not in fields
 
 
-def test_FeedFormater_check_format_default(feedreader_feed_valid):
-    ff = rss.FeedFormater(feedreader_feed_valid)
+def test_FeedFormater_check_format_default(bot, feedreader_feed_valid):
+    ff = rss.FeedFormater(bot, feedreader_feed_valid)
     assert ff.get_default() == ff.get_format()
 
 
-def test_FeedFormater_check_format_hashed_empty(feedreader_feed_valid):
+def test_FeedFormater_check_format_hashed_empty(bot, feedreader_feed_valid):
     format = '+t'
-    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, format)
     assert format != ff.get_format()
 
 
-def test_FeedFormater_check_format_output_empty(feedreader_feed_valid):
+def test_FeedFormater_check_format_output_empty(bot, feedreader_feed_valid):
     format = 't'
-    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, format)
     assert format != ff.get_format()
 
 
-def test_FeedFormater_check_format_hashed_only_feedname(feedreader_feed_valid):
+def test_FeedFormater_check_format_hashed_only_feedname(bot, feedreader_feed_valid):
     format = 'f+t'
-    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, format)
     assert format != ff.get_format()
 
 
-def test_FeedFormater_check_format_output_only_feedname(feedreader_feed_valid):
+def test_FeedFormater_check_format_output_only_feedname(bot, feedreader_feed_valid):
     format = 't+f'
-    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, format)
     assert format != ff.get_format()
 
 
-def test_FeedFormater_check_format_duplicate_separator(feedreader_feed_valid):
+def test_FeedFormater_check_format_duplicate_separator(bot, feedreader_feed_valid):
     format = 't+t+t'
-    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, format)
     assert format != ff.get_format()
 
 
-def test_FeedFormater_check_format_duplicate_field_hashed(feedreader_feed_valid):
+def test_FeedFormater_check_format_duplicate_field_hashed(bot,feedreader_feed_valid):
     format = 'll+t'
-    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, format)
     assert format != ff.get_format()
 
 
-def test_FeedFormater_check_format_duplicate_field_output(feedreader_feed_valid):
+def test_FeedFormater_check_format_duplicate_field_output(bot, feedreader_feed_valid):
     format = 'l+tll'
-    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, format)
     assert format != ff.get_format()
 
 
-def test_FeedFormater_check_format_tinyurl(feedreader_feed_valid):
+def test_FeedFormater_check_format_tinyurl(bot, feedreader_feed_valid):
     format = 'fy+ty'
-    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, format)
     assert format == ff.get_format()
 
 
-def test_FeedFormater_check_tinyurl_output(feedreader_feed_valid):
+def test_FeedFormater_check_tinyurl_output(bot, feedreader_feed_valid):
     format = 'fy+ty'
-    ff = rss.FeedFormater(feedreader_feed_valid, format)
+    ff = rss.FeedFormater(bot, feedreader_feed_valid, format)
     item = feedreader_feed_valid.get_feed().entries[0]
     post = ff.get_post('feed1', item)
     expected = 'Title 3 \x02→\x02 https://tinyurl.com/govvpmm'
