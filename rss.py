@@ -44,6 +44,16 @@ COMMANDS = {
         'optional': 1,
         'function': '__rssAdd'
     },
+    'config': {
+        'synopsis': 'synopsis: {}rss config <key> [<value>]',
+        'helptext': ['show the value of a key in the config file',
+                     'or set the value of a key in the config file'],
+        'examples': ['{}rss config formats',
+                     '{}rss config templates t|«{}»'],
+        'required': 1,
+        'optional': 1,
+        'function': '__rssConfig'
+    },
     'del': {
         'synopsis': 'synopsis: {}rss del <name>',
         'helptext': ['delete a feed identified by <name>.'],
@@ -117,6 +127,36 @@ COMMANDS = {
     }
 }
 
+CONFIG = {
+    'feeds': {
+        'synopsis': 'feeds = <channel1>|<feed1>|',
+        'helptext': [''],
+        'examples': [''],
+        'func_get': '__configGetFeeds',
+        'func_set': '__configSetFeeds'
+    },
+    'formats': {
+        'synopsis': '',
+        'helptext': [''],
+        'examples': [''],
+        'func_get': '__configGetFormats',
+        'func_set': '__configSetFormats'
+    },
+    'templates': {
+        'synopsis': '',
+        'helptext': [''],
+        'examples': [''],
+        'func_get': '__configGetTemplates',
+        'func_set': '__configSetTemplates'
+    },
+}
+#    'key: formats, value: format1,format2,...'
+#    'defines the default formats of feeds',
+#    'key: templates, value: field template'
+#    'defines the template of a feed item field',
+#    'template must contain exactly one pair of curly braces',
+#    '{} will be substituted by the field value'],
+
 MESSAGES = {
     'added_feed_formater_for_feed':
         'added feed formater for feed "{}"',
@@ -126,6 +166,8 @@ MESSAGES = {
         'added rss feed "{}" to channel "{}" with url "{}"',
     'added_rss_feed_to_channel_with_url_and_format':
         'added rss feed "{}" to channel "{}" with url "{}" and format "{}"',
+    'added_sqlite_table_for_feed':
+        'added sqlite table "{}" for feed "{}"',
     'channel_must_start_with_a_hash_sign':
         'channel "{}" must start with a "#"',
     'command_is_one_of':
@@ -136,6 +178,8 @@ MESSAGES = {
         'deleted ring buffer for feed "{}"',
     'deleted_rss_feed_in_channel_with_url':
         'deleted rss feed "{}" in channel "{}" with url "{}"',
+    'dropped_sqlite_table_of_feed':
+        'dropped sqlite table "{}" of feed "{}"',
     'examples':
         'examples:',
     'feed_items_have_neither_title_nor_description':
@@ -177,9 +221,9 @@ class RSSSection(StaticSection):
 
 def configure(config):
     config.define_section('rss', RSSSection)
-    config.rss.configure_setting('feeds', 'comma separated strings consisting of channel, name, url and an optional format separated by spaces')
+    config.rss.configure_setting('feeds', 'comma separated strings consisting of channel, name, url and an optional format separated by pipes')
     config.rss.configure_setting('formats', 'comma separated strings consisting hash and output fields separated by {}'.format(FORMAT_SEPARATOR))
-    config.rss.configure_setting('templates', 'comma separated strings consisting format field and template string separated by spaces'.format(FORMAT_SEPARATOR))
+    config.rss.configure_setting('templates', 'comma separated strings consisting format field and template string separated by pipes'.format(FORMAT_SEPARATOR))
 
 
 def setup(bot):
@@ -246,6 +290,22 @@ def __rssAdd(bot, args):
     bot.say(message)
     bot.join(channel)
     __configSave(bot)
+
+
+def __rssConfig(bot, args):
+    key = args[0]
+    value = ''
+    if len(args) == 2:
+        value = args[1]
+
+    if not value:
+        # call get function
+        message = globals()[CONFIG[key]['func_get']](bot)
+        bot.say(message)
+        return
+
+    # call set function
+    globals()[CONFIG[key]['func_set']](bot, value)
 
 
 def __rssDel(bot, args):
@@ -381,52 +441,83 @@ def __configDefine(bot):
     return bot
 
 
+def __configConcatenateChannels(bot):
+    channels = bot.config.core.channels
+    for feedname, feed in bot.memory['rss']['feeds'].items():
+        if not feed['channel'] in channels:
+            channels += [feed['channel']]
+    return channels
+
+
+def __configConcatenateFeeds(bot):
+    feeds = []
+    for feedname, feed in bot.memory['rss']['feeds'].items():
+        newfeed = feed['channel'] + '|' + feed['name'] + '|' + feed['url']
+        format = bot.memory['rss']['formats']['feeds'][feedname].get_format()
+        format_default = bot.memory['rss']['formats']['feeds'][feedname].get_default()
+        if format != format_default:
+            newfeed += '|' + format
+        feeds.append(newfeed)
+        feeds.sort()
+    return [','.join(feeds)]
+
+
+def __configConcatenateFormats(bot):
+    formats = list()
+    for format in bot.memory['rss']['formats']['default']:
+
+        # only save formats that differ from the default
+        if not format == FORMAT_DEFAULT:
+            formats.append(format)
+    return [','.join(formats)]
+
+
+def __configConcatenateTemplates(bot):
+    templates = list()
+    for field in bot.memory['rss']['templates']['default']:
+        template = bot.memory['rss']['templates']['default'][field]
+
+        #only save template that differ from the default
+        if not TEMPLATES_DEFAULT[field] == template:
+            templates.append(field + '|' + template)
+    templates.sort()
+    return [','.join(templates)]
+
+
+def __configGetFeeds(bot):
+    return __configConcatenateFeeds(bot)[0]
+
+
+def __configGetFormats(bot):
+    return __configConcatenateFormats(bot)[0] + ',' + FORMAT_DEFAULT
+
+
+def __configGetTemplates(bot):
+    templates = list()
+    for field in TEMPLATES_DEFAULT:
+        try:
+            template = bot.memory['rss']['templates']['default'][field]
+        except KeyError:
+            template = TEMPLATES_DEFAULT[field]
+        templates.append(field + '|' + template)
+    templates.sort()
+    return ','.join(templates)
+
+
 # read config from disk to memory
 def __configRead(bot):
 
     # read feeds from config file
     if bot.config.rss.feeds and bot.config.rss.feeds[0]:
-        for feed in bot.config.rss.feeds:
-
-            # split feed by spaces
-            atoms = feed.split(' ')
-
-            channel = atoms[0]
-            feedname = atoms[1]
-            url = atoms[2]
-
-            try:
-                format = atoms[3]
-            except IndexError:
-                format = ''
-
-            __feedAdd(bot, channel, feedname, url, format)
-            __hashesRead(bot, feedname)
-
-    fields = ''
-    for f in TEMPLATES_DEFAULT:
-        fields += f
-        bot.memory['rss']['templates']['default'][f] = TEMPLATES_DEFAULT[f]
+        __configSplitFeeds(bot, bot.config.rss.feeds)
 
     # read default formats from config file
     if bot.config.rss.formats and bot.config.rss.formats[0]:
-        for format in bot.config.rss.formats:
-            # check if format contains only valid fields
-            if not set(format) <= set(fields + FORMAT_SEPARATOR):
-                continue
-            if not FeedFormater(bot, FeedReader('')).is_format_valid(format, FORMAT_SEPARATOR, fields):
-                continue
-            bot.memory['rss']['formats']['default'].append(format)
-
-    if not bot.memory['rss']['formats']['default']:
-        bot.memory['rss']['formats']['default'] = FORMAT_DEFAULT
+        bot.memory['rss']['formats']['default'] = __configSplitFormats(bot, bot.config.rss.formats)
 
     # read default templates from config file
     if bot.config.rss.templates and bot.config.rss.templates[0]:
-        for template in bot.config.rss.templates:
-            atoms = template.split(' ')
-            if FeedFormater(bot, FeedReader('')).is_template_valid(atoms[1]):
-                bot.memory['rss']['templates']['default'][atoms[0]] = atoms[1]
+        bot.memory['rss']['templates']['default'] = __configSplitTemplates(bot, bot.config.rss.templates)
 
     message = 'read config from disk'
     LOGGER.debug(message)
@@ -441,43 +532,10 @@ def __configSave(bot):
     for feedname in bot.memory['rss']['feeds']:
         __dbRemoveOldHashesFromDatabase(bot, feedname)
 
-    # flatten feeds for config file
-    feeds = []
-    for feedname, feed in bot.memory['rss']['feeds'].items():
-        newfeed = feed['channel'] + ' ' + feed['name'] + ' ' + feed['url']
-        format = bot.memory['rss']['formats']['feeds'][feedname].get_format()
-        format_default = bot.memory['rss']['formats']['feeds'][feedname].get_default()
-        if format != format_default:
-            newfeed += ' ' + format
-        feeds.append(newfeed)
-    bot.config.rss.feeds = [','.join(feeds)]
-
-    # save channels to config file
-    channels = bot.config.core.channels
-    for feedname, feed in bot.memory['rss']['feeds'].items():
-        if not feed['channel'] in channels:
-            bot.config.core.channels += [feed['channel']]
-
-    # flatten formats for config file
-    formats = list()
-    for format in bot.memory['rss']['formats']['default']:
-
-        # only save formats that differ from the default
-        if not format == FORMAT_DEFAULT:
-            formats.append(format)
-
-    bot.config.rss.formats = [','.join(formats)]
-
-    # flatten templates for config file
-    templates = list()
-    for field in bot.memory['rss']['templates']['default']:
-        template = bot.memory['rss']['templates']['default'][field]
-
-        #only save template that differ from the default
-        if not TEMPLATES_DEFAULT[field] == template:
-            templates.append(field + ' ' + template)
-
-    bot.config.rss.templates = [','.join(templates)]
+    bot.config.core.channels = __configConcatenateChannels(bot)
+    bot.config.rss.feeds = __configConcatenateFeeds(bot)
+    bot.config.rss.formats = __configConcatenateFormats(bot)
+    bot.config.rss.templates = __configConcatenateTemplates(bot)
 
     try:
         bot.config.save()
@@ -486,6 +544,72 @@ def __configSave(bot):
     except:
         message = MESSAGES['unable_to_save_config_to_disk']
         LOGGER.error(message)
+
+
+def __configSetFeeds(bot, value):
+    pass
+
+
+def __configSetFormats(bot, value):
+    pass
+
+
+def __configSetTemplates(bot, value):
+    pass
+
+
+def __configSplitFeeds(bot, feeds):
+    for feed in feeds:
+
+        # split feed by pipes
+        atoms = feed.split('|')
+
+        channel = atoms[0]
+        feedname = atoms[1]
+        url = atoms[2]
+
+        try:
+            format = atoms[3]
+        except IndexError:
+            format = ''
+
+        feedreader = FeedReader(url)
+        if __feedCheck(bot, feedreader, channel, feedname) == []:
+            __feedAdd(bot, channel, feedname, url, format)
+            __hashesRead(bot, feedname)
+
+
+def __configSplitFormats(bot, formats):
+    result = list()
+
+    fields = ''
+    for f in TEMPLATES_DEFAULT:
+        fields += f
+
+    for format in formats:
+        # check if format contains only valid fields
+        if not set(format) <= set(fields + FORMAT_SEPARATOR):
+            continue
+        if not FeedFormater(bot, FeedReader('')).is_format_valid(format, FORMAT_SEPARATOR, fields):
+            continue
+        result.append(format)
+
+    if result:
+        return result
+    return FORMAT_DEFAULT
+
+
+def __configSplitTemplates(bot, templates):
+    result = dict()
+
+    for f in TEMPLATES_DEFAULT:
+        result[f] = TEMPLATES_DEFAULT[f]
+
+    for template in templates:
+        atoms = template.split('|')
+        if FeedFormater(bot, FeedReader('')).is_template_valid(atoms[1]):
+            result[atoms[0]] = atoms[1]
+    return result
 
 
 def __dbCheckIfTableExists(bot, feedname):
@@ -501,7 +625,7 @@ def __dbCreateTable(bot, feedname):
     # INSERT OR IGNORE (which is an abbreviation for INSERT ON CONFLICT IGNORE)
     sql_create_table = "CREATE TABLE '{}' (id INTEGER PRIMARY KEY, hash VARCHAR(32) UNIQUE)".format(tablename)
     bot.db.execute(sql_create_table)
-    message = 'added sqlite table "{}" for feed "{}"'.format(tablename, feedname)
+    message = MESSAGES['added_sqlite_table_for_feed'].format(tablename, feedname)
     LOGGER.debug(message)
 
 
@@ -509,7 +633,7 @@ def __dbDropTable(bot, feedname):
     tablename = __digestTablename(feedname)
     sql_drop_table = "DROP TABLE '{}'".format(tablename)
     bot.db.execute(sql_drop_table)
-    message = 'dropped sqlite table "{}" of feed "{}"'.format(tablename, feedname)
+    message = MESSAGES['dropped_sqlite_table_of_feed'].format(tablename, feedname)
     LOGGER.debug(message)
 
 

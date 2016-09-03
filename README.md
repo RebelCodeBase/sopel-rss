@@ -72,9 +72,9 @@ Comma separated list of default formats which will be used if the fields of the 
 
 ### templates
 
-**Synopsis:** *templates = \<field1\> \<template1\>,\<field1\> \<template1\>...*
+**Synopsis:** *templates = \<field1\>:\<template1\>,\<field2\>:\<template2\>...*
 
-Comma separated list of template strings which will override the default template strings. Curly braces will be replaced by the actual string.
+Comma separated list of template strings which will override the default template strings. Curly braces will be replaced by the actual string. field and template are separated by a colon.
 
 ## Formats
 
