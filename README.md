@@ -24,6 +24,12 @@ All commands require owner or admin privileges.
 
 Add the feed *\<url\>* to *\<channel\>* and call it *\<name\>*. Optionally, a format can be specified, see section Format. The feed will be read approximately every minute and new items will be automatically posted to *\<channel\>*.
 
+### rss config &mdash; get and set configuration values
+
+**Synopsis:** *.rss config \<key\> [\<value\>]*
+
+Get a *\<key\>* from the configuration file or set a *\<value\>* of a *\<key\>* and the consequences will be applied immediately. Use *.rss help config* to see which keys are available. Use *.rss help config \<key\>* to get a detailed explanation of *\<key\>*. 
+
 ### rss del &mdash; delete a feed
 
 **Synopsis:** *.rss del \<name\>*
@@ -35,6 +41,12 @@ Delete the feed called \<name\>.
 **Synopsis:** *.rss get \<name\>*
 
 Post all items of the feed to the channel of the feed. Mainly useful for debugging.
+
+### rss help &mdash; get help online
+
+**Synopsis:** *.rss help [\<command\>]*
+
+Get a list of available commands or get a detailed explanation of a command. Have a look at *.rss help config*. 
 
 ### rss list &mdash; list feeds
 

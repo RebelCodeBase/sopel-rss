@@ -8,5 +8,6 @@
 - added tinyurl flag to shorten links through [tinyurl](https://www.tinyurl.com/)
 - added configurable default formats
 - added configurable default templates
+- added help on config keys
 
 ## [0.1.0](https://github.com/RebelCodeBase/sopel-rss/tree/v0.1.0) (2016-08-29) initial release

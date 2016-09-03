@@ -588,9 +588,12 @@ def __configSplitFeeds(bot, feeds):
         # split feed by pipes
         atoms = feed.split('|')
 
-        channel = atoms[0]
-        feedname = atoms[1]
-        url = atoms[2]
+        try:
+            channel = atoms[0]
+            feedname = atoms[1]
+            url = atoms[2]
+        except IndexError:
+            continue
 
         try:
             format = atoms[3]
