@@ -441,28 +441,6 @@ def test_rssHelp_config_templates(bot):
     assert expected == bot.output
 
 
-def test_rssHelpConfig_formats(bot):
-    rss.__rssHelpConfig(bot, ['help', 'config', 'formats'])
-    expected = rss.CONFIG['formats']['synopsis'].format(bot.config.core.prefix) + '\n'
-    for message in rss.CONFIG['formats']['helptext']:
-        expected += message + '\n'
-    expected += rss.MESSAGES['examples'] + '\n'
-    for message in rss.CONFIG['formats']['examples']:
-        expected += message.format(bot.config.core.prefix) + '\n'
-    assert expected == bot.output
-
-
-def test__rssHelpText_del(bot):
-    rss.__rssHelpText(bot, rss.COMMANDS, 'del')
-    expected = rss.COMMANDS['del']['synopsis'].format(bot.config.core.prefix) + '\n'
-    for message in rss.COMMANDS['del']['helptext']:
-        expected += message + '\n'
-    expected += rss.MESSAGES['examples'] + '\n'
-    for message in rss.COMMANDS['del']['examples']:
-        expected += message.format(bot.config.core.prefix) + '\n'
-    assert expected == bot.output
-
-
 def test_rssJoin(bot):
     rss.__rssJoin(bot, ['join'])
     channels = []
@@ -885,6 +863,28 @@ def test_hashesRead(bot, feedreader_feed_valid):
     rss.__hashesRead(bot, 'feed1')
     hashes = bot.memory['rss']['hashes']['feed1'].get()
     assert expected == hashes
+
+
+def test_helpConfig_formats(bot):
+    rss.__helpConfig(bot, ['help', 'config', 'formats'])
+    expected = rss.CONFIG['formats']['synopsis'].format(bot.config.core.prefix) + '\n'
+    for message in rss.CONFIG['formats']['helptext']:
+        expected += message + '\n'
+    expected += rss.MESSAGES['examples'] + '\n'
+    for message in rss.CONFIG['formats']['examples']:
+        expected += message.format(bot.config.core.prefix) + '\n'
+    assert expected == bot.output
+
+
+def test__helpText_del(bot):
+    rss.__helpText(bot, rss.COMMANDS, 'del')
+    expected = rss.COMMANDS['del']['synopsis'].format(bot.config.core.prefix) + '\n'
+    for message in rss.COMMANDS['del']['helptext']:
+        expected += message + '\n'
+    expected += rss.MESSAGES['examples'] + '\n'
+    for message in rss.COMMANDS['del']['examples']:
+        expected += message.format(bot.config.core.prefix) + '\n'
+    assert expected == bot.output
 
 
 def test_FeedFormater_get_format_custom(bot, feedreader_feed_valid):

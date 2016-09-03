@@ -381,34 +381,11 @@ def __rssHelp(bot, args):
 
     # in case of 'config' we may have to output detailed help on config keys
     if cmd == 'config':
-        __rssHelpConfig(bot, args)
+        __helpConfig(bot, args)
         return
 
     # output help texts on commands
-    __rssHelpText(bot, COMMANDS, cmd)
-
-
-def __rssHelpConfig(bot, args):
-    args_count = len(args)
-    if args_count == 3:
-        cmd = args[2]
-        __rssHelpText(bot, CONFIG, cmd)
-        return
-
-    __rssHelpText(bot, COMMANDS, 'config')
-    message = MESSAGES['get_help_on_config_keys_with'].format(bot.config.core.prefix, '|'.join(sorted(CONFIG.keys())))
-    bot.say(message)
-
-
-def __rssHelpText(bot, type, cmd):
-    message = type[cmd]['synopsis'].format(bot.config.core.prefix)
-    bot.say(message)
-    for message in type[cmd]['helptext']:
-        bot.say(message)
-    message = MESSAGES['examples']
-    bot.say(message)
-    for message in type[cmd]['examples']:
-        bot.say(message.format(bot.config.core.prefix))
+    __helpText(bot, COMMANDS, cmd)
 
 
 def __rssJoin(bot, args):
@@ -846,6 +823,29 @@ def __hashesRead(bot, feedname):
     # hash[1]: md5 hash
     for hash in hashes:
         bot.memory['rss']['hashes'][feedname].append(hash[1])
+
+
+def __helpConfig(bot, args):
+    args_count = len(args)
+    if args_count == 3:
+        cmd = args[2]
+        __helpText(bot, CONFIG, cmd)
+        return
+
+    __helpText(bot, COMMANDS, 'config')
+    message = MESSAGES['get_help_on_config_keys_with'].format(bot.config.core.prefix, '|'.join(sorted(CONFIG.keys())))
+    bot.say(message)
+
+
+def __helpText(bot, type, cmd):
+    message = type[cmd]['synopsis'].format(bot.config.core.prefix)
+    bot.say(message)
+    for message in type[cmd]['helptext']:
+        bot.say(message)
+    message = MESSAGES['examples']
+    bot.say(message)
+    for message in type[cmd]['examples']:
+        bot.say(message.format(bot.config.core.prefix))
 
 
 # Implementing an rss format handler
