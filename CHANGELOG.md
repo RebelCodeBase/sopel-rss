@@ -4,10 +4,10 @@
     
 ## unreleased
 
-- added tests
 - added configurable default formats
 - added configurable default templates
-- added help on config keys
+- added help on config keys and values
+- added py.test3 unit tests
 - added tinyurl flag to shorten links through [tinyurl](https://www.tinyurl.com/)
 - changed config format
 - fixed bugs
