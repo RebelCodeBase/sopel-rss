@@ -46,10 +46,9 @@ COMMANDS = {
     },
     'config': {
         'synopsis': 'synopsis: {}rss config <key> [<value>]',
-        'helptext': ['show the value of a key in the config file',
-                     'or set the value of a key in the config file'],
+        'helptext': ['show the value of a key in the config file or set the value of a key in the config file.'],
         'examples': ['{}rss config formats',
-                     '{}rss config templates t|«{}»'],
+                     '{}rss config templates'],
         'required': 1,
         'optional': 1,
         'function': '__rssConfig'
@@ -97,12 +96,12 @@ COMMANDS = {
         'helptext': ['get help for <command>.'],
         'examples': ['{}rss help format'],
         'required': 0,
-        'optional': 1,
+        'optional': 2,
         'function': '__rssHelp'
     },
     'join': {
         'synopsis': 'synopsis: {}rss join',
-        'helptext': ['join all channels which are associated to a feed'],
+        'helptext': ['join all channels which are associated to a feed.'],
         'examples': ['{}rss join'],
         'required': 0,
         'optional': 0,
@@ -119,7 +118,7 @@ COMMANDS = {
     },
     'update': {
         'synopsis': 'synopsis: {}rss update',
-        'helptext': ['post the latest feed items of all feeds'],
+        'helptext': ['post the latest feed items of all feeds.'],
         'examples': ['{}rss update'],
         'required': 0,
         'optional': 0,
@@ -129,33 +128,30 @@ COMMANDS = {
 
 CONFIG = {
     'feeds': {
-        'synopsis': 'feeds = <channel1>|<feed1>|',
-        'helptext': [''],
-        'examples': [''],
+        'synopsis': 'feeds = <channel1>|<feed1>|<url1>[|<format1>],<channel2>|<feed2>|<url2>[|<format2>],...',
+        'helptext': ['the bot is watching these feeds. it reads the feed located at the url and posts new feed items to the channel in the specified format.'],
+        'examples': ['feeds = #sopel-test|guardian|https://www.theguardian.com/world/rss|fl+ftl'],
         'func_get': '__configGetFeeds',
         'func_set': '__configSetFeeds'
     },
     'formats': {
-        'synopsis': '',
-        'helptext': [''],
-        'examples': [''],
+        'synopsis': 'formats = <format1>,<format2>,...',
+        'helptext': ['if no format is defined for a feed the bot will try these formats and the global default format (' + FORMAT_DEFAULT + ') one by one until it finds a valid format.',
+                     'a format is valid if the fields used in the format do exist in the feed items.'],
+        'examples': ['formats = pl+fpatl, plfpl'],
         'func_get': '__configGetFormats',
         'func_set': '__configSetFormats'
     },
     'templates': {
-        'synopsis': '',
-        'helptext': [''],
+        'synopsis': 'templates = <field1>|<template1>,<field2>|<template2>,...',
+        'helptext': ['for each rss feed item field a template can be defined which will be used to create the output string.',
+                     'each template must contain exactly one pair of curly braces which will be replaced by the field value.',
+                     'the bot will use the global default template for those fields which no custom template is defined.'],
         'examples': [''],
         'func_get': '__configGetTemplates',
         'func_set': '__configSetTemplates'
     },
 }
-#    'key: formats, value: format1,format2,...'
-#    'defines the default formats of feeds',
-#    'key: templates, value: field template'
-#    'defines the template of a feed item field',
-#    'template must contain exactly one pair of curly braces',
-#    '{} will be substituted by the field value'],
 
 MESSAGES = {
     'added_feed_formater_for_feed':
@@ -192,6 +188,8 @@ MESSAGES = {
         'fields of feed "{}" are "{}"',
     'format_of_feed_has_been_set_to':
         'format of feed "{}" has been set to "{}"',
+    'get_help_on_config_keys_with':
+        'get help on config keys with:\n{}rss help config {}',
     'read_hashes_of_feed_from_sqlite_table':
         'read hashes of feed "{}" from sqlite table "{}"',
     'removed_rows_in_table_of_feed':
@@ -378,15 +376,38 @@ def __rssHelp(bot, args):
             bot.say(message)
         return
 
-    # output help messages
+    # get the command
     cmd = args[1]
-    message = COMMANDS[cmd]['synopsis'].format(bot.config.core.prefix)
+
+    # in case of 'config' we may have to output detailed help on config keys
+    if cmd == 'config':
+        __rssHelpConfig(bot, args)
+        return
+
+    # output help texts on commands
+    __rssHelpText(bot, COMMANDS, cmd)
+
+
+def __rssHelpConfig(bot, args):
+    args_count = len(args)
+    if args_count == 3:
+        cmd = args[2]
+        __rssHelpText(bot, CONFIG, cmd)
+        return
+
+    __rssHelpText(bot, COMMANDS, 'config')
+    message = MESSAGES['get_help_on_config_keys_with'].format(bot.config.core.prefix, '|'.join(sorted(CONFIG.keys())))
     bot.say(message)
-    for message in COMMANDS[cmd]['helptext']:
+
+
+def __rssHelpText(bot, type, cmd):
+    message = type[cmd]['synopsis'].format(bot.config.core.prefix)
+    bot.say(message)
+    for message in type[cmd]['helptext']:
         bot.say(message)
     message = MESSAGES['examples']
     bot.say(message)
-    for message in COMMANDS[cmd]['examples']:
+    for message in type[cmd]['examples']:
         bot.say(message.format(bot.config.core.prefix))
 
 

@@ -382,13 +382,58 @@ def test_rssHelp_synopsis_help(bot):
     assert expected == bot.output
 
 
-def test_rssHelp_command(bot):
+def test_rssHelp_add(bot):
     rss.__rssHelp(bot, ['help', 'add'])
     expected = rss.COMMANDS['add']['synopsis'].format(bot.config.core.prefix) + '\n'
     for message in rss.COMMANDS['add']['helptext']:
         expected += message + '\n'
     expected += rss.MESSAGES['examples'] + '\n'
     for message in rss.COMMANDS['add']['examples']:
+        expected += message.format(bot.config.core.prefix) + '\n'
+    assert expected == bot.output
+
+
+def test_rssHelp_config(bot):
+    rss.__rssHelp(bot, ['help', 'config'])
+    expected = rss.COMMANDS['config']['synopsis'].format(bot.config.core.prefix) + '\n'
+    for message in rss.COMMANDS['config']['helptext']:
+        expected += message + '\n'
+    expected += rss.MESSAGES['examples'] + '\n'
+    for message in rss.COMMANDS['config']['examples']:
+        expected += message.format(bot.config.core.prefix) + '\n'
+    expected += rss.MESSAGES['get_help_on_config_keys_with'].format(bot.config.core.prefix, '|'.join(sorted(rss.CONFIG.keys()))) + '\n'
+    assert expected == bot.output
+
+
+def test_rssHelp_config_templates(bot):
+    rss.__rssHelp(bot, ['help', 'config', 'templates'])
+    expected = rss.CONFIG['templates']['synopsis'].format(bot.config.core.prefix) + '\n'
+    for message in rss.CONFIG['templates']['helptext']:
+        expected += message + '\n'
+    expected += rss.MESSAGES['examples'] + '\n'
+    for message in rss.CONFIG['templates']['examples']:
+        expected += message.format(bot.config.core.prefix) + '\n'
+    assert expected == bot.output
+
+
+def test_rssHelpConfig_formats(bot):
+    rss.__rssHelpConfig(bot, ['help', 'config', 'formats'])
+    expected = rss.CONFIG['formats']['synopsis'].format(bot.config.core.prefix) + '\n'
+    for message in rss.CONFIG['formats']['helptext']:
+        expected += message + '\n'
+    expected += rss.MESSAGES['examples'] + '\n'
+    for message in rss.CONFIG['formats']['examples']:
+        expected += message.format(bot.config.core.prefix) + '\n'
+    assert expected == bot.output
+
+
+def test__rssHelpText_del(bot):
+    rss.__rssHelpText(bot, rss.COMMANDS, 'del')
+    expected = rss.COMMANDS['del']['synopsis'].format(bot.config.core.prefix) + '\n'
+    for message in rss.COMMANDS['del']['helptext']:
+        expected += message + '\n'
+    expected += rss.MESSAGES['examples'] + '\n'
+    for message in rss.COMMANDS['del']['examples']:
         expected += message.format(bot.config.core.prefix) + '\n'
     assert expected == bot.output
 
