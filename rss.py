@@ -42,7 +42,7 @@ COMMANDS = {
                       '{}rss add #sopel-test guardian https://www.theguardian.com/world/rss ' + FORMAT_DEFAULT],
         'required': 3,
         'optional': 1,
-        'function': '__rssAdd'
+        'function': '_rss_add'
     },
     'config': {
         'synopsis': 'synopsis: {}rss config <key> [<value>]',
@@ -51,7 +51,7 @@ COMMANDS = {
                      '{}rss config templates'],
         'required': 1,
         'optional': 1,
-        'function': '__rssConfig'
+        'function': '_rss_config'
     },
     'del': {
         'synopsis': 'synopsis: {}rss del <name>',
@@ -59,7 +59,7 @@ COMMANDS = {
         'examples': ['{}rss del guardian'],
         'required': 1,
         'optional': 0,
-        'function': '__rssDel'
+        'function': '_rss_del'
     },
     'fields': {
         'synopsis': 'synopsis: {}rss fields <name>',
@@ -68,7 +68,7 @@ COMMANDS = {
         'examples': ['{}rss fields guardian'],
         'required': 1,
         'optional': 0,
-        'function': '__rssFields'
+        'function': '_rss_fields'
     },
     'format': {
         'synopsis': 'synopsis: {}rss format <name> <format>',
@@ -81,7 +81,7 @@ COMMANDS = {
         'examples': ['{}rss format fl+ftl'],
         'required': 2,
         'optional': 0,
-        'function': '__rssFormat'
+        'function': '_rss_format'
     },
     'get': {
         'synopsis': 'synopsis: {}rss get <name>',
@@ -89,7 +89,7 @@ COMMANDS = {
         'examples': ['{}rss get guardian'],
         'required': 1,
         'optional': 0,
-        'function': '__rssGet'
+        'function': '_rss_get'
     },
     'help': {
         'synopsis': 'synopsis: {}rss help [<command>]',
@@ -97,7 +97,7 @@ COMMANDS = {
         'examples': ['{}rss help format'],
         'required': 0,
         'optional': 2,
-        'function': '__rssHelp'
+        'function': '_rss_help'
     },
     'join': {
         'synopsis': 'synopsis: {}rss join',
@@ -105,7 +105,7 @@ COMMANDS = {
         'examples': ['{}rss join'],
         'required': 0,
         'optional': 0,
-        'function': '__rssJoin'
+        'function': '_rss_join'
     },
     'list': {
         'synopsis': 'synopsis: {}rss list [<feed>|<channel>]',
@@ -114,7 +114,7 @@ COMMANDS = {
                      '{}rss list', '{}rss list #sopel-test'],
         'required': 0,
         'optional': 1,
-        'function': '__rssList'
+        'function': '_rss_list'
     },
     'update': {
         'synopsis': 'synopsis: {}rss update',
@@ -122,7 +122,7 @@ COMMANDS = {
         'examples': ['{}rss update'],
         'required': 0,
         'optional': 0,
-        'function': '__rssUpdate'
+        'function': '_rss_update'
     }
 }
 
@@ -131,16 +131,16 @@ CONFIG = {
         'synopsis': 'feeds = <channel1>|<feed1>|<url1>[|<format1>],<channel2>|<feed2>|<url2>[|<format2>],...',
         'helptext': ['the bot is watching these feeds. it reads the feed located at the url and posts new feed items to the channel in the specified format.'],
         'examples': ['feeds = #sopel-test|guardian|https://www.theguardian.com/world/rss|fl+ftl'],
-        'func_get': '__configGetFeeds',
-        'func_set': '__configSetFeeds'
+        'func_get': '_config_get_feeds',
+        'func_set': '_config_set_feeds'
     },
     'formats': {
         'synopsis': 'formats = <format1>,<format2>,...',
         'helptext': ['if no format is defined for a feed the bot will try these formats and the global default format (' + FORMAT_DEFAULT + ') one by one until it finds a valid format.',
                      'a format is valid if the fields used in the format do exist in the feed items.'],
         'examples': ['formats = pl+fpatl, plfpl'],
-        'func_get': '__configGetFormats',
-        'func_set': '__configSetFormats'
+        'func_get': '_config_get_formats',
+        'func_set': '_config_set_formats'
     },
     'templates': {
         'synopsis': 'templates = <field1>|<template1>,<field2>|<template2>,...',
@@ -148,8 +148,8 @@ CONFIG = {
                      'each template must contain exactly one pair of curly braces which will be replaced by the field value.',
                      'the bot will use the global default template for those fields which no custom template is defined.'],
         'examples': [''],
-        'func_get': '__configGetTemplates',
-        'func_set': '__configSetTemplates'
+        'func_get': '_config_get_templates',
+        'func_set': '_config_set_templates'
     },
 }
 
@@ -225,12 +225,12 @@ def configure(config):
 
 
 def setup(bot):
-    bot = __configDefine(bot)
-    __configRead(bot)
+    bot = _config_define(bot)
+    _config_read(bot)
 
 
 def shutdown(bot):
-    __configSave(bot)
+    _config_save(bot)
 
 
 @require_admin
@@ -239,10 +239,10 @@ def rss(bot, trigger):
     # trigger(1) == 'rss'
     # trigger(2) are the arguments separated by spaces
     args = shlex.split(trigger.group(2))
-    __rss(bot, args)
+    _rss(bot, args)
 
 
-def __rss(bot, args):
+def _rss(bot, args):
     args_count = len(args)
 
     # check if we have a valid command or output general synopsis
@@ -270,7 +270,7 @@ def __rss(bot, args):
     globals()[COMMANDS[cmd]['function']](bot, args)
 
 
-def __rssAdd(bot, args):
+def _rss_add(bot, args):
     channel = args[1]
     feedname = args[2]
     url = args[3]
@@ -278,19 +278,19 @@ def __rssAdd(bot, args):
     if len(args) == 5:
         format = args[4]
     feedreader = FeedReader(url)
-    checkresults = __feedCheck(bot, feedreader, channel, feedname)
+    checkresults = _feed_check(bot, feedreader, channel, feedname)
     if checkresults:
         for message in checkresults:
             LOGGER.debug(message)
             bot.say(message)
         return
-    message = __feedAdd(bot, channel, feedname, url, format)
+    message = _feed_add(bot, channel, feedname, url, format)
     bot.say(message)
     bot.join(channel)
-    __configSave(bot)
+    _config_save(bot)
 
 
-def __rssConfig(bot, args):
+def _rss_config(bot, args):
     key = args[0]
     value = ''
     if len(args) == 2:
@@ -306,21 +306,21 @@ def __rssConfig(bot, args):
     globals()[CONFIG[key]['func_set']](bot, value)
 
 
-def __rssDel(bot, args):
+def _rss_del(bot, args):
     feedname = args[1]
-    if not __feedExists(bot, feedname):
+    if not _feed_exists(bot, feedname):
         message = MESSAGES['feed_does_not_exist'].format(feedname)
         bot.say(message)
         return
 
-    message = __feedDelete(bot, feedname)
+    message = _feed_delete(bot, feedname)
     bot.say(message)
-    __configSave(bot)
+    _config_save(bot)
 
 
-def __rssFields(bot, args):
+def _rss_fields(bot, args):
     feedname = args[1]
-    if not __feedExists(bot, feedname):
+    if not _feed_exists(bot, feedname):
         message = MESSAGES['feed_does_not_exist'].format(feedname)
         bot.say(message)
         return
@@ -330,10 +330,10 @@ def __rssFields(bot, args):
     bot.say(message)
 
 
-def __rssFormat(bot, args):
+def _rss_format(bot, args):
     feedname = args[1]
     format = args[2]
-    if not __feedExists(bot, feedname):
+    if not _feed_exists(bot, feedname):
         message = MESSAGES['feed_does_not_exist'].format(feedname)
         bot.say(message)
         return
@@ -350,10 +350,10 @@ def __rssFormat(bot, args):
     bot.say(message)
 
 
-def __rssGet(bot, args):
+def _rss_get(bot, args):
     feedname = args[1]
 
-    if not __feedExists(bot, feedname):
+    if not _feed_exists(bot, feedname):
         message = 'feed "{}" doesn\'t exist!'.format(feedname)
         LOGGER.debug(message)
         bot.say(message)
@@ -361,10 +361,10 @@ def __rssGet(bot, args):
 
     url = bot.memory['rss']['feeds'][feedname]['url']
     feedreader = FeedReader(url)
-    __feedUpdate(bot, feedreader, feedname, True)
+    _feed_update(bot, feedreader, feedname, True)
 
 
-def __rssHelp(bot, args):
+def _rss_help(bot, args):
     args_count = len(args)
 
     # check if we have a valid command or output general synopsis
@@ -381,52 +381,52 @@ def __rssHelp(bot, args):
 
     # in case of 'config' we may have to output detailed help on config keys
     if cmd == 'config':
-        __helpConfig(bot, args)
+        _help_config(bot, args)
         return
 
     # output help texts on commands
-    __helpText(bot, COMMANDS, cmd)
+    _help_text(bot, COMMANDS, cmd)
 
 
-def __rssJoin(bot, args):
+def _rss_join(bot, args):
     for feedname, feed in bot.memory['rss']['feeds'].items():
         bot.join(feed['channel'])
     if bot.config.core.logging_channel:
         bot.join(bot.config.core.logging_channel)
 
 
-def __rssList(bot, args):
+def _rss_list(bot, args):
 
     arg = ''
     if len(args) == 2:
         arg = args[1]
 
     # list feed
-    if arg and __feedExists(bot, arg):
-        __feedList(bot, arg)
+    if arg and _feed_exists(bot, arg):
+        _feed_list(bot, arg)
         return
 
     # list feeds in channel
     for feedname, feed in bot.memory['rss']['feeds'].items():
         if arg and arg != feed['channel']:
             continue
-        __feedList(bot, feedname)
+        _feed_list(bot, feedname)
 
 
 @interval(UPDATE_INTERVAL)
-def __rssUpdate(bot, args=[]):
+def _rss_update(bot, args=[]):
     for feedname in bot.memory['rss']['feeds']:
 
         # the conditional check is necessary to avoid
         # "RuntimeError: dictionary changed size during iteration"
         # which occurs if a feed has been deleted in the meantime
-        if __feedExists(bot, feedname):
+        if _feed_exists(bot, feedname):
             url = bot.memory['rss']['feeds'][feedname]['url']
             feedreader = FeedReader(url)
-            __feedUpdate(bot, feedreader, feedname, False)
+            _feed_update(bot, feedreader, feedname, False)
 
 
-def __configDefine(bot):
+def _config_define(bot):
     bot.config.define_section('rss', RSSSection)
     bot.memory['rss'] = SopelMemory()
     bot.memory['rss']['feeds'] = dict()
@@ -439,7 +439,7 @@ def __configDefine(bot):
     return bot
 
 
-def __configConcatenateChannels(bot):
+def _config_concatenate_channels(bot):
     channels = bot.config.core.channels
     for feedname, feed in bot.memory['rss']['feeds'].items():
         if not feed['channel'] in channels:
@@ -447,7 +447,7 @@ def __configConcatenateChannels(bot):
     return channels
 
 
-def __configConcatenateFeeds(bot):
+def _config_concatenate_feeds(bot):
     feeds = []
     for feedname, feed in bot.memory['rss']['feeds'].items():
         newfeed = feed['channel'] + '|' + feed['name'] + '|' + feed['url']
@@ -460,7 +460,7 @@ def __configConcatenateFeeds(bot):
     return [','.join(feeds)]
 
 
-def __configConcatenateFormats(bot):
+def _config_concatenate_formats(bot):
     formats = list()
     for format in bot.memory['rss']['formats']['default']:
 
@@ -470,7 +470,7 @@ def __configConcatenateFormats(bot):
     return [','.join(formats)]
 
 
-def __configConcatenateTemplates(bot):
+def _config_concatenate_templates(bot):
     templates = list()
     for field in bot.memory['rss']['templates']['default']:
         template = bot.memory['rss']['templates']['default'][field]
@@ -482,15 +482,15 @@ def __configConcatenateTemplates(bot):
     return [','.join(templates)]
 
 
-def __configGetFeeds(bot):
-    return __configConcatenateFeeds(bot)[0]
+def _config_get_feeds(bot):
+    return _config_concatenate_feeds(bot)[0]
 
 
-def __configGetFormats(bot):
-    return __configConcatenateFormats(bot)[0] + ',' + FORMAT_DEFAULT
+def _config_get_formats(bot):
+    return _config_concatenate_formats(bot)[0] + ',' + FORMAT_DEFAULT
 
 
-def __configGetTemplates(bot):
+def _config_get_templates(bot):
     templates = list()
     for field in TEMPLATES_DEFAULT:
         try:
@@ -503,37 +503,37 @@ def __configGetTemplates(bot):
 
 
 # read config from disk to memory
-def __configRead(bot):
+def _config_read(bot):
 
     # read feeds from config file
     if bot.config.rss.feeds and bot.config.rss.feeds[0]:
-        __configSplitFeeds(bot, bot.config.rss.feeds)
+        _config_split_feeds(bot, bot.config.rss.feeds)
 
     # read default formats from config file
     if bot.config.rss.formats and bot.config.rss.formats[0]:
-        bot.memory['rss']['formats']['default'] = __configSplitFormats(bot, bot.config.rss.formats)
+        bot.memory['rss']['formats']['default'] = _config_split_formats(bot, bot.config.rss.formats)
 
     # read default templates from config file
     if bot.config.rss.templates and bot.config.rss.templates[0]:
-        bot.memory['rss']['templates']['default'] = __configSplitTemplates(bot, bot.config.rss.templates)
+        bot.memory['rss']['templates']['default'] = _config_split_templates(bot, bot.config.rss.templates)
 
     message = 'read config from disk'
     LOGGER.debug(message)
 
 
 # save config from memory to disk
-def __configSave(bot):
+def _config_save(bot):
     if not bot.memory['rss']['feeds'] or not bot.memory['rss']['formats'] or not bot.memory['rss']['templates']:
         return
 
     # we want no more than MAX_HASHES in our database
     for feedname in bot.memory['rss']['feeds']:
-        __dbRemoveOldHashesFromDatabase(bot, feedname)
+        _db_remove_old_hashes_from_database(bot, feedname)
 
-    bot.config.core.channels = __configConcatenateChannels(bot)
-    bot.config.rss.feeds = __configConcatenateFeeds(bot)
-    bot.config.rss.formats = __configConcatenateFormats(bot)
-    bot.config.rss.templates = __configConcatenateTemplates(bot)
+    bot.config.core.channels = _config_concatenate_channels(bot)
+    bot.config.rss.feeds = _config_concatenate_feeds(bot)
+    bot.config.rss.formats = _config_concatenate_formats(bot)
+    bot.config.rss.templates = _config_concatenate_templates(bot)
 
     try:
         bot.config.save()
@@ -544,22 +544,22 @@ def __configSave(bot):
         LOGGER.error(message)
 
 
-def __configSetFeeds(bot, value):
+def _config_set_feeds(bot, value):
     feeds = value.split(',')
-    __configSplitFeeds(bot, feeds)
+    _config_split_feeds(bot, feeds)
 
 
-def __configSetFormats(bot, value):
+def _config_set_formats(bot, value):
     formats = value.split(',')
-    bot.memory['rss']['formats']['default'] = __configSplitFormats(bot, formats)
+    bot.memory['rss']['formats']['default'] = _config_split_formats(bot, formats)
 
 
-def __configSetTemplates(bot, value):
+def _config_set_templates(bot, value):
     templates = value.split(',')
-    bot.memory['rss']['templates']['default'] = __configSplitTemplates(bot, templates)
+    bot.memory['rss']['templates']['default'] = _config_split_templates(bot, templates)
 
 
-def __configSplitFeeds(bot, feeds):
+def _config_split_feeds(bot, feeds):
     for feed in feeds:
 
         # split feed by pipes
@@ -578,12 +578,12 @@ def __configSplitFeeds(bot, feeds):
             format = ''
 
         feedreader = FeedReader(url)
-        if __feedCheck(bot, feedreader, channel, feedname) == []:
-            __feedAdd(bot, channel, feedname, url, format)
-            __hashesRead(bot, feedname)
+        if _feed_check(bot, feedreader, channel, feedname) == []:
+            _feed_add(bot, channel, feedname, url, format)
+            _hashes_read(bot, feedname)
 
 
-def __configSplitFormats(bot, formats):
+def _config_split_formats(bot, formats):
     result = list()
 
     fields = ''
@@ -604,7 +604,7 @@ def __configSplitFormats(bot, formats):
     return FORMAT_DEFAULT
 
 
-def __configSplitTemplates(bot, templates):
+def _config_split_templates(bot, templates):
     result = dict()
 
     for f in TEMPLATES_DEFAULT:
@@ -617,14 +617,14 @@ def __configSplitTemplates(bot, templates):
     return result
 
 
-def __dbCheckIfTableExists(bot, feedname):
-    tablename = __digestTablename(feedname)
+def _db_check_if_table_exists(bot, feedname):
+    tablename = _digest_tablename(feedname)
     sql_check_table = "SELECT name FROM sqlite_master WHERE type='table' AND name=(?)"
     return bot.db.execute(sql_check_table, (tablename,)).fetchall()
 
 
-def __dbCreateTable(bot, feedname):
-    tablename = __digestTablename(feedname)
+def _db_create_table(bot, feedname):
+    tablename = _digest_tablename(feedname)
 
     # use UNIQUE for column hash to minimize database writes by using
     # INSERT OR IGNORE (which is an abbreviation for INSERT ON CONFLICT IGNORE)
@@ -634,31 +634,31 @@ def __dbCreateTable(bot, feedname):
     LOGGER.debug(message)
 
 
-def __dbDropTable(bot, feedname):
-    tablename = __digestTablename(feedname)
+def _db_drop_table(bot, feedname):
+    tablename = _digest_tablename(feedname)
     sql_drop_table = "DROP TABLE '{}'".format(tablename)
     bot.db.execute(sql_drop_table)
     message = MESSAGES['dropped_sqlite_table_of_feed'].format(tablename, feedname)
     LOGGER.debug(message)
 
 
-def __dbGetNumberOfRows(bot, feedname):
-    tablename = __digestTablename(feedname)
+def _db_get_number_of_rows(bot, feedname):
+    tablename = _digest_tablename(feedname)
     sql_count_hashes = "SELECT count(*) FROM '{}'".format(tablename)
     return bot.db.execute(sql_count_hashes).fetchall()[0][0]
 
 
-def __dbReadHashesFromDatabase(bot, feedname):
-    tablename = __digestTablename(feedname)
+def _db_read_hashes_from_database(bot, feedname):
+    tablename = _digest_tablename(feedname)
     sql_hashes = "SELECT * FROM '{}'".format(tablename)
     message = MESSAGES['read_hashes_of_feed_from_sqlite_table'].format(feedname, tablename)
     LOGGER.debug(message)
     return bot.db.execute(sql_hashes).fetchall()
 
 
-def __dbRemoveOldHashesFromDatabase(bot, feedname):
-    tablename = __digestTablename(feedname)
-    rows = __dbGetNumberOfRows(bot, feedname)
+def _db_remove_old_hashes_from_database(bot, feedname):
+    tablename = _digest_tablename(feedname)
+    rows = _db_get_number_of_rows(bot, feedname)
 
     if rows > MAX_HASHES_PER_FEED:
 
@@ -680,8 +680,8 @@ def __dbRemoveOldHashesFromDatabase(bot, feedname):
         LOGGER.debug(message)
 
 
-def __dbSaveHashToDatabase(bot, feedname, hash):
-    tablename = __digestTablename(feedname)
+def _db_save_hash_to_database(bot, feedname, hash):
+    tablename = _digest_tablename(feedname)
 
     # INSERT OR IGNORE is the short form of INSERT ON CONFLICT IGNORE
     sql_save_hashes = "INSERT OR IGNORE INTO '{}' VALUES (NULL,?)".format(tablename)
@@ -695,16 +695,16 @@ def __dbSaveHashToDatabase(bot, feedname, hash):
         LOGGER.error(message)
 
 
-def __digestTablename(feedname):
+def _digest_tablename(feedname):
     # we need to hash the name of the table as sqlite3 does not permit to parametrize table names
     return 'rss_' + hashlib.md5(feedname.encode('utf-8')).hexdigest()
 
 
-def __feedAdd(bot, channel, feedname, url, format=''):
+def _feed_add(bot, channel, feedname, url, format=''):
     # create hash table for this feed in sqlite3 database provided by the sopel framework
-    result = __dbCheckIfTableExists(bot, feedname)
+    result = _db_check_if_table_exists(bot, feedname)
     if not result:
-        __dbCreateTable(bot, feedname)
+        _db_create_table(bot, feedname)
 
     # create new RingBuffer for hashes of feed items
     bot.memory['rss']['hashes'][feedname] = RingBuffer(MAX_HASHES_PER_FEED)
@@ -728,7 +728,7 @@ def __feedAdd(bot, channel, feedname, url, format=''):
     return message_info
 
 
-def __feedCheck(bot, feedreader, channel, feedname):
+def _feed_check(bot, feedreader, channel, feedname):
     result = []
 
     # read feed
@@ -749,7 +749,7 @@ def __feedCheck(bot, feedreader, channel, feedname):
         result.append(message)
 
     # check that feed name is unique
-    if __feedExists(bot, feedname):
+    if _feed_exists(bot, feedname):
         message = MESSAGES['feed_name_already_in_use'].format(feedname)
         result.append(message)
 
@@ -761,7 +761,7 @@ def __feedCheck(bot, feedreader, channel, feedname):
     return result
 
 
-def __feedDelete(bot, feedname):
+def _feed_delete(bot, feedname):
     channel = bot.memory['rss']['feeds'][feedname]['channel']
     url = bot.memory['rss']['feeds'][feedname]['url']
 
@@ -773,23 +773,23 @@ def __feedDelete(bot, feedname):
     message = MESSAGES['deleted_ring_buffer_for_feed'].format(feedname)
     LOGGER.debug(message)
 
-    __dbDropTable(bot, feedname)
+    _db_drop_table(bot, feedname)
     return message_info
 
 
-def __feedExists(bot, feedname):
+def _feed_exists(bot, feedname):
     if feedname in bot.memory['rss']['feeds']:
         return True
     return False
 
 
-def __feedList(bot, feedname):
+def _feed_list(bot, feedname):
     feed = bot.memory['rss']['feeds'][feedname]
     format_feed = bot.memory['rss']['formats']['feeds'][feedname].get_format()
     bot.say('{} {} {} {}'.format(feed['channel'], feed['name'], feed['url'], format_feed))
 
 
-def __feedUpdate(bot, feedreader, feedname, chatty):
+def _feed_update(bot, feedreader, feedname, chatty):
     feed = feedreader.get_feed()
 
     if not feed:
@@ -807,16 +807,16 @@ def __feedUpdate(bot, feedreader, feedname, chatty):
         if chatty or new_item:
             if new_item:
                 bot.memory['rss']['hashes'][feedname].append(hash)
-                __dbSaveHashToDatabase(bot, feedname, hash)
+                _db_save_hash_to_database(bot, feedname, hash)
             message = bot.memory['rss']['formats']['feeds'][feedname].get_post(feedname, item)
             LOGGER.debug(message)
             bot.say(message, channel)
 
 
-def __hashesRead(bot, feedname):
+def _hashes_read(bot, feedname):
 
     # read hashes from database to memory
-    hashes = __dbReadHashesFromDatabase(bot, feedname)
+    hashes = _db_read_hashes_from_database(bot, feedname)
 
     # each hash in hashes consists of
     # hash[0]: id
@@ -825,19 +825,19 @@ def __hashesRead(bot, feedname):
         bot.memory['rss']['hashes'][feedname].append(hash[1])
 
 
-def __helpConfig(bot, args):
+def _help_config(bot, args):
     args_count = len(args)
     if args_count == 3:
         cmd = args[2]
-        __helpText(bot, CONFIG, cmd)
+        _help_text(bot, CONFIG, cmd)
         return
 
-    __helpText(bot, COMMANDS, 'config')
+    _help_text(bot, COMMANDS, 'config')
     message = MESSAGES['get_help_on_config_keys_with'].format(bot.config.core.prefix, '|'.join(sorted(CONFIG.keys())))
     bot.say(message)
 
 
-def __helpText(bot, type, cmd):
+def _help_text(bot, type, cmd):
     message = type[cmd]['synopsis'].format(bot.config.core.prefix)
     bot.say(message)
     for message in type[cmd]['helptext']:
@@ -869,17 +869,17 @@ class FeedFormater:
         return self.format
 
     def get_fields(self):
-        return self.__formatGetFields(self.feedreader)
+        return self._format_get_fields(self.feedreader)
 
     def get_hash(self, feedname, item):
         saneitem = dict()
-        saneitem['author'] = self.__valueSanitize('author', item)
-        saneitem['description'] = self.__valueSanitize('description', item)
-        saneitem['guid'] = self.__valueSanitize('guid', item)
-        saneitem['link'] = self.__valueSanitize('link', item)
-        saneitem['published'] = self.__valueSanitize('published', item)
-        saneitem['summary'] = self.__valueSanitize('summary', item)
-        saneitem['title'] = self.__valueSanitize('title', item)
+        saneitem['author'] = self._value_sanitize('author', item)
+        saneitem['description'] = self._value_sanitize('description', item)
+        saneitem['guid'] = self._value_sanitize('guid', item)
+        saneitem['link'] = self._value_sanitize('link', item)
+        saneitem['published'] = self._value_sanitize('published', item)
+        saneitem['summary'] = self._value_sanitize('summary', item)
+        saneitem['title'] = self._value_sanitize('title', item)
 
         legend = {
             'f': feedname,
@@ -900,19 +900,19 @@ class FeedFormater:
         return hashlib.md5(signature.encode('utf-8')).hexdigest()
 
     def get_minimal(self):
-        fields = self.__formatGetFields(self.feedreader)
+        fields = self._format_get_fields(self.feedreader)
         if 't' in fields:
             return 'ft+ft'
         return 'fd+fd'
 
     def get_post(self, feedname, item):
         saneitem = dict()
-        saneitem['author'] = self.__valueSanitize('author', item)
-        saneitem['description'] = self.__valueSanitize('description', item)
-        saneitem['guid'] = self.__valueSanitize('guid', item)
-        saneitem['link'] = self.__valueSanitize('link', item)
-        saneitem['summary'] = self.__valueSanitize('summary', item)
-        saneitem['title'] = self.__valueSanitize('title', item)
+        saneitem['author'] = self._value_sanitize('author', item)
+        saneitem['description'] = self._value_sanitize('description', item)
+        saneitem['guid'] = self._value_sanitize('guid', item)
+        saneitem['link'] = self._value_sanitize('link', item)
+        saneitem['summary'] = self._value_sanitize('summary', item)
+        saneitem['title'] = self._value_sanitize('title', item)
 
         pubtime = ''
         if 'p' in self.output:
@@ -948,8 +948,8 @@ class FeedFormater:
         return post[:-1]
 
     def is_format_valid(self, format, separator, fields = ''):
-        hashed, output, remainder = self.__formatSplit(format, separator)
-        return(self.__formatValid(hashed, output, remainder, fields))
+        hashed, output, remainder = self._format_split(format, separator)
+        return(self._format_valid(hashed, output, remainder, fields))
 
     def is_template_valid(self, template):
 
@@ -960,19 +960,19 @@ class FeedFormater:
         return True
 
     def set_format(self, format_new=''):
-        format_sanitized = self.__formatSanitize(format_new)
+        format_sanitized = self._format_sanitize(format_new)
         if format_new and format_new != format_sanitized:
             return self.format
         self.format = format_sanitized
-        self.hashed, self.output, self.remainder = self.__formatSplit(self.format, self.separator)
+        self.hashed, self.output, self.remainder = self._format_split(self.format, self.separator)
         return self.format
 
     def set_minimal(self):
         self.format = self.get_minimal()
-        self.hashed, self.output, self.remainder = self.__formatSplit(self.format, self.separator)
+        self.hashed, self.output, self.remainder = self._format_split(self.format, self.separator)
         return self.format
 
-    def __formatGetFields(self, feedreader):
+    def _format_get_fields(self, feedreader):
         feed = feedreader.get_feed()
 
         try:
@@ -1001,30 +1001,30 @@ class FeedFormater:
 
         return fields
 
-    def __formatSanitize(self, format):
+    def _format_sanitize(self, format):
 
         # check if format is valid
         if format:
-            hashed, output, remainder = self.__formatSplit(format, self.separator)
-            if self.__formatValid(hashed, output, remainder):
+            hashed, output, remainder = self._format_split(format, self.separator)
+            if self._format_valid(hashed, output, remainder):
                 return hashed + self.separator + output
 
         # check in turn if each default format is valid
         for format in self.bot.memory['rss']['formats']['default']:
-            hashed, output, remainder = self.__formatSplit(format, self.separator)
-            if self.__formatValid(hashed, output, remainder):
+            hashed, output, remainder = self._format_split(format, self.separator)
+            if self._format_valid(hashed, output, remainder):
                 return hashed + self.separator + output
 
         # check if global default format is valid
-        hashed, output, remainder = self.__formatSplit(FORMAT_DEFAULT, self.separator)
-        if self.__formatValid(hashed, output, remainder):
+        hashed, output, remainder = self._format_split(FORMAT_DEFAULT, self.separator)
+        if self._format_valid(hashed, output, remainder):
             return hashed + self.separator + output
 
         # else return the minimal valid format
         return self.get_minimal()
 
 
-    def __formatSplit(self, format, separator):
+    def _format_split(self, format, separator):
         format_split = str(format).split(separator)
         hashed = format_split[0]
         try:
@@ -1039,7 +1039,7 @@ class FeedFormater:
 
         return hashed, output, remainder
 
-    def __formatValid(self, hashed, output, remainder, fields = ''):
+    def _format_valid(self, hashed, output, remainder, fields =''):
 
         # check format for duplicate separators
         if remainder:
@@ -1062,7 +1062,7 @@ class FeedFormater:
             return False
 
         if not fields:
-            fields = self.__formatGetFields(self.feedreader)
+            fields = self._format_get_fields(self.feedreader)
 
         # check hashed has only valid fields
         for f in hashed:
@@ -1084,7 +1084,7 @@ class FeedFormater:
 
         return True
 
-    def __valueSanitize(self, key, item):
+    def _value_sanitize(self, key, item):
         if hasattr(item, key):
             return item[key]
         return ''
@@ -1111,7 +1111,7 @@ class FeedReader:
         return tinyurl
 
 
-    # Implementing a ring buffer
+# Implementing a ring buffer
 # https://www.safaribooksonline.com/library/view/python-cookbook/0596001673/ch05s19.html
 class RingBuffer:
     """ class that implements a not-yet-full buffer """
