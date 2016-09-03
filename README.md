@@ -36,6 +36,18 @@ Get a *\<key\>* from the configuration file or set a *\<value\>* of a *\<key\>* 
 
 Delete the feed called \<name\>.
 
+### rss fields &mdash; get feed item fields
+
+**Synopsis:** *.rss fields \<name\>*
+
+Get the item fields of the feed *\<name\>*. 
+
+### rss format &mdash; set the format of a feed
+
+**Synopsis:** *.rss format \<name\> \<format\>*
+
+Set the format of the feed *\<name\>* to *\<format\>*. 
+
 ### rss get &mdash; read a feed and post new items
 
 **Synopsis:** *.rss get \<name\>*
@@ -68,25 +80,25 @@ Calls the internal function which updates the feed every minute. This command is
 
 ## Options
 
-The following options can be set in the configuration file. It will be read when the bot is started or when the owner or an admin issues the command *.reload rss* in a query with the bot. Be aware that the bot mustn't be running when editing the configuration file. Otherwise, your edits may be overwritten!
+The following options can be set in the configuration file or via *.rss config \<key\> \<value\>*. The configuration file will be read when the bot is (re)started or when the owner or an admin issues the command *.reload rss* in a query with the bot. Be aware that the bot mustn't be running when editing the configuration file. Otherwise, your edits may be overwritten!
 
 ### feeds
 
-**Synopsis:** *feeds=\<channel1\> \<name1\> \<url1\> [\<format1\>],\<channel2\> \<name2\> \<url2\> [\<format2\>]...*
+**Synopsis:** *.rss config feeds \<channel1\>|\<name1\>|\<url1\>|[\<format1\>],\<channel2\>|\<name2\>|\<url2\>|[\<format2\>]...*
 
-Comma separated list of feed definitions with channel, feedname, url and optionally format separated by blanks.
+Comma separated list of feed definitions with channel, feedname, url and optionally format separated by pipes.
 
 ### formats
 
-**Synopsis:** *formats = \<format1\>,\<format2\>,...*
+**Synopsis:** *.rss config formats \<format1\>,\<format2\>,...*
 
 Comma separated list of default formats which will be used if the fields of the feed fit the format.
 
 ### templates
 
-**Synopsis:** *templates = \<field1\>:\<template1\>,\<field2\>:\<template2\>...*
+**Synopsis:** *.rss config templates \<field1\>|\<template1\>,\<field2\>|\<template2\>...*
 
-Comma separated list of template strings which will override the default template strings. Curly braces will be replaced by the actual string. field and template are separated by a colon.
+Comma separated list of template strings which will override the default template strings. Curly braces will be replaced by the actual string. field and template are separated by a pipe.
 
 ## Formats
 
