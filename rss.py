@@ -189,7 +189,7 @@ MESSAGES = {
     'format_of_feed_has_been_set_to':
         'format of feed "{}" has been set to "{}"',
     'get_help_on_config_keys_with':
-        'get help on config keys with:\n{}rss help config {}',
+        'get help on config keys with: {}rss help config {}',
     'read_hashes_of_feed_from_sqlite_table':
         'read hashes of feed "{}" from sqlite table "{}"',
     'removed_rows_in_table_of_feed':
