@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+rss.py - Sopel rss module
+Copyright © 2016, RebelCodeBase, https://github.com/RebelCodeBase/sopel-rss
+Licensed under the GNU GENERAL PUBLIC LICENSE, Version 3
+
+This module posts rss feed items to irc channels
+"""
 from __future__ import unicode_literals
 from sopel.formatting import bold
 from sopel.config.types import StaticSection, ListAttribute, ValidatedAttribute
