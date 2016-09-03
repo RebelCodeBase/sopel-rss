@@ -568,15 +568,18 @@ def __configSave(bot):
 
 
 def __configSetFeeds(bot, value):
-    pass
+    feeds = value.split(',')
+    __configSplitFeeds(bot, feeds)
 
 
 def __configSetFormats(bot, value):
-    pass
+    formats = value.split(',')
+    bot.memory['rss']['formats']['default'] = __configSplitFormats(bot, formats)
 
 
 def __configSetTemplates(bot, value):
-    pass
+    templates = value.split(',')
+    bot.memory['rss']['templates']['default'] = __configSplitTemplates(bot, templates)
 
 
 def __configSplitFeeds(bot, feeds):
@@ -608,6 +611,7 @@ def __configSplitFormats(bot, formats):
         fields += f
 
     for format in formats:
+
         # check if format contains only valid fields
         if not set(format) <= set(fields + FORMAT_SEPARATOR):
             continue

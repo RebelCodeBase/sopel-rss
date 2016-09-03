@@ -54,6 +54,31 @@ FEED_VALID = '''<?xml version="1.0" encoding="utf-8" ?>
 </rss>'''
 
 
+FEED_BASIC = '''<?xml version="1.0" encoding="utf-8" ?>
+<rss version="2.0" xml:base="http://www.site1.com/feed" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel>
+<title>Site 1 Articles</title>
+<link>http://www.site1.com/feed</link>
+
+<item>
+<title>Title 3</title>
+<link>http://www.site1.com/article3</link>
+</item>
+
+<item>
+<title>Title 2</title>
+<link>http://www.site1.com/article2</link>
+</item>
+
+<item>
+<title>Title 1</title>
+<link>http://www.site1.com/article1</link>
+</item>
+
+</channel>
+</rss>'''
+
+
 FEED_INVALID = '''<?xml version="1.0" encoding="utf-8" ?>
 <rss version="2.0" xml:base="http://www.site1.com/feed" xmlns:dc="http://purl.org/dc/elements/1.1/">
 <channel>
@@ -572,7 +597,6 @@ def test_configRead_format_custom_invalid(bot_basic):
 def test_configRead_template_default(bot_basic):
     for t in rss.TEMPLATES_DEFAULT:
         bot_basic.config.rss.templates.append(t + '|' + rss.TEMPLATES_DEFAULT[t])
-    print(bot_basic.config.rss.templates)
     rss.__configRead(bot_basic)
     templates = bot_basic.memory['rss']['templates']['default']
     expected = rss.TEMPLATES_DEFAULT
@@ -614,6 +638,58 @@ templates = t|<<{}>>
     f = open(bot_config_save.config.filename, 'r')
     config = f.read()
     assert expected == config
+
+
+def test_configSetFeeds_get(bot_basic):
+    feeds = '#channelA|feedA|' + FEED_BASIC + '|t+t,#channelB|feedB|' + FEED_BASIC + '|tl+tl'
+    rss.__configSetFeeds(bot_basic, feeds)
+    get = rss.__configGetFeeds(bot_basic)
+    assert feeds == get
+
+
+def test_configSetFeeds_exists(bot_basic):
+    feeds = '#channelA|feedA|' + FEED_BASIC + '|fyg+fgty,#channelB|feedB|' + FEED_BASIC + '|lp+fptl'
+    rss.__configSetFeeds(bot_basic, feeds)
+    result = rss.__feedExists(bot_basic, 'feedB')
+    assert True == result
+
+
+def test_configSetFormats_get(bot):
+    formats = 't+t,d+d'
+    rss.__configSetFormats(bot, formats)
+    get = rss.__configGetFormats(bot)
+    expected = formats + ',' + rss.FORMAT_DEFAULT
+    assert expected == get
+
+
+def test_configSetFormats_join(bot):
+    formats = 't+t,d+d'
+    rss.__configSetFormats(bot, formats)
+    formats_bot = ','.join(bot.memory['rss']['formats']['default'])
+    assert formats == formats_bot
+
+
+def test_configSetTemplates_get(bot):
+    templates = 't|≈{}≈,s|√{}'
+    rss.__configSetTemplates(bot, templates)
+    get = rss.__configGetTemplates(bot)
+    expected_dict = dict()
+    for f in rss.TEMPLATES_DEFAULT:
+        expected_dict[f] = rss.TEMPLATES_DEFAULT[f]
+    expected_dict['s'] = '√{}'
+    expected_dict['t'] = '≈{}≈'
+    expected_list = list()
+    for f in expected_dict:
+        expected_list.append(f + '|' + expected_dict[f])
+    expected = ','.join(sorted(expected_list))
+    assert expected == get
+
+
+def test_configSetTemplates_dict(bot):
+    templates = 't|≈{}≈,s|√{}'
+    rss.__configSetTemplates(bot, templates)
+    template = bot.memory['rss']['templates']['default']['s']
+    assert '√{}' == template
 
 
 def test__configSplitFeeds_valid(bot):
