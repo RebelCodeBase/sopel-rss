@@ -206,7 +206,8 @@ def test_rss_global_too_few_parameters(bot):
 def test_rss_global_config_templates(bot):
     rss._rss(bot, ['config', 'templates'])
     expected = 'a|<{}>,d|{},f|' + bold('[{}]') + ',g|{},l|' + bold('→') + ' {}'
-    expected += ',p|({}),s|{},t|{},y|' + bold('→') + ' {}\n'
+    expected += ',p|({}),s|{},t|{},y|' + bold('→') + ' {}'
+    expected = repr(expected)[1:-1] + '\n'
     expected += rss._config_templates_example(bot) + '\n'
     assert expected == bot.output
 
@@ -307,7 +308,9 @@ def test_rss_config_templates_list(bot):
     bot.memory['rss']['templates']['default']['t'] = '†{}†'
     args = ['config', 'templates']
     rss._rss_config(bot, args)
-    expected = 'a|<{}>,d|{},f|\x02[{}]\x02,g|{},l|\x02→\x02 {},p|({}),s|{},t|†{}†,y|\x02→\x02 {}' + '\n'
+    expected = 'a|<{}>,d|{},f|' + bold('[{}]') + ',g|{},l|' + bold('→') + ' {}'
+    expected += ',p|({}),s|{},t|†{}†,y|' + bold('→') + ' {}'
+    expected = repr(expected)[1:-1] + '\n'
     expected += rss._config_templates_example(bot) + '\n'
     assert expected == bot.output
 
@@ -663,7 +666,8 @@ def test_config_set_templates_get(bot):
     expected_list = list()
     for f in expected_dict:
         expected_list.append(f + '|' + expected_dict[f])
-    expected = ','.join(sorted(expected_list)) + '\n'
+    expected = ','.join(sorted(expected_list))
+    expected = repr(expected)[1:-1] + '\n'
     expected += rss._config_templates_example(bot) + '\n'
     assert expected == bot.output
 

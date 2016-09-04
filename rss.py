@@ -526,7 +526,7 @@ def _config_get_templates(bot):
             template = TEMPLATES_DEFAULT[field]
         templates.append(field + '|' + template)
     templates.sort()
-    bot.say(','.join(templates))
+    bot.say(repr(','.join(templates))[1:-1])
     bot.say(_config_templates_example(bot))
 
 
@@ -585,7 +585,7 @@ def _config_set_formats(bot, value):
 def _config_set_templates(bot, value):
     templates = value.split(',')
     bot.memory['rss']['templates']['default'] = _config_split_templates(bot, templates)
-    bot.say(_config_templates_example(bot))
+    _config_get_templates(bot)
 
 
 def _config_split_feeds(bot, feeds):
