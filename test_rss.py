@@ -859,7 +859,7 @@ def test_feed_list_format(bot):
     assert expected == bot.output
 
 
-def test_feed_update_print_messages(bot, feedreader_feed_valid):
+def test_feed_update_messages(bot, feedreader_feed_valid):
     rss._feed_update(bot, feedreader_feed_valid, 'feed1', True)
     expected = bold('[feed1]') + ' Title 1 ' + bold('→') + " http://www.site1.com/article1\n" + bold('[feed1]') + ' Title 2 ' + bold('→') + " http://www.site1.com/article2\n" + bold('[feed1]') + ' Title 3 ' + bold('→') + " http://www.site1.com/article3\n"
     assert expected == bot.output
