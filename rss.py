@@ -8,10 +8,10 @@ This module posts rss feed items to irc channels
 """
 from __future__ import unicode_literals
 from sopel.config.types import StaticSection, ListAttribute, ValidatedAttribute
+from sopel.formatting import color, bold, underline
 from sopel.logger import get_logger
 from sopel.module import commands, interval, require_admin
 from sopel.tools import SopelMemory
-import sopel.formatting
 import feedparser
 import hashlib
 import shlex
@@ -298,10 +298,15 @@ def _rss_add(bot, args):
 
 
 def _rss_config(bot, args):
-    key = args[0]
+    print(args)
+    key = args[1]
+    if key not in CONFIG:
+        return
+
+
     value = ''
-    if len(args) == 2:
-        value = args[1]
+    if len(args) == 3:
+        value = args[2]
 
     if not value:
         # call get function

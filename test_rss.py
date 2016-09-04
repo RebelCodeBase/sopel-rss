@@ -216,12 +216,10 @@ def test_rss_global_too_few_parameters(bot):
     assert expected == bot.output
 
 
-def test_rss_global_config_feeds_list(bot):
-    rss._rss(bot, ['format', 'feed1', 'apl+atl'])
-    bot.output = ''
-    args = ['feeds']
-    rss._rss_config(bot, args)
-    expected = '#channel1|feed1|http://www.site1.com/feed|apl+atl\n'
+def test_rss_global_config_templates(bot):
+    rss._rss(bot, ['config', 'templates'])
+    expected = 'a|<{}>,d|{},f|' + bold('[{}]') + ',g|{},l|' + bold('→') + ' {}'
+    expected += ',p|({}),s|{},t|{},y|' + bold('→') + ' {}\n'
     assert expected == bot.output
 
 
@@ -246,6 +244,15 @@ def test_rss_global_format_set(bot):
     rss._rss(bot, ['format', 'feed1', 'asl+als'])
     format_new = bot.memory['rss']['formats']['feeds']['feed1'].get_format()
     assert 'asl+als' == format_new
+
+
+def test_rss_global_format_feed(bot):
+    rss._rss(bot, ['format', 'feed1', 'apl+atl'])
+    bot.output = ''
+    args = ['config', 'feeds']
+    rss._rss_config(bot, args)
+    expected = '#channel1|feed1|http://www.site1.com/feed|apl+atl\n'
+    assert expected == bot.output
 
 
 def test_rss_global_get_post_feed_items(bot):
@@ -294,7 +301,7 @@ def test_rss_config_feeds_list(bot):
     rss._rss_format(bot, ['format', 'feed1', 'asl+als'])
     rss._rss_add(bot, ['add', '#channel2', 'feed2', FEED_VALID, 'p+tlpas'])
     bot.output = ''
-    args = ['feeds']
+    args = ['config', 'feeds']
     rss._rss_config(bot, args)
     expected = '#channel1|feed1|http://www.site1.com/feed|asl+als,#channel2|feed2|' + FEED_VALID + '|p+tlpas\n'
     assert expected == bot.output
@@ -302,7 +309,7 @@ def test_rss_config_feeds_list(bot):
 
 def test_rss_config_formats_list(bot):
     bot.memory['rss']['formats']['default'] = ['lts+flts','at+at']
-    args = ['formats']
+    args = ['config', 'formats']
     rss._rss_config(bot, args)
     expected = 'lts+flts,at+at,fl+ftl' + '\n'
     assert expected == bot.output
@@ -310,9 +317,15 @@ def test_rss_config_formats_list(bot):
 
 def test_rss_config_templates_list(bot):
     bot.memory['rss']['templates']['default']['t'] = '†{}†'
-    args = ['templates']
+    args = ['config', 'templates']
     rss._rss_config(bot, args)
     expected = 'a|<{}>,d|{},f|\x02[{}]\x02,g|{},l|\x02→\x02 {},p|({}),s|{},t|†{}†,y|\x02→\x02 {}' + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_invalid_key(bot):
+    rss._rss_config(bot, ['config', 'invalidkey'])
+    expected = ''
     assert expected == bot.output
 
 
