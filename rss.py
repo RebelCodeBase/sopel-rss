@@ -8,7 +8,6 @@ This module posts rss feed items to irc channels
 """
 from __future__ import unicode_literals
 from sopel.config.types import StaticSection, ListAttribute, ValidatedAttribute
-from sopel.formatting import color, bold, underline
 from sopel.logger import get_logger
 from sopel.module import commands, interval, require_admin
 from sopel.tools import SopelMemory
@@ -29,16 +28,44 @@ FORMAT_DEFAULT = 'fl+ftl'
 
 FORMAT_SEPARATOR = '+'
 
+ESCAPE_CHARACTER = '%'
+
+ESCAPE_COLOR = '\x03'
+
+ESCAPE_CODE = {
+    '00': '00',   # white
+    '01': '01',   # black
+    '02': '02',   # blue (navy)
+    '03': '03',   # green
+    '04': '04',   # red
+    '05': '05',   # brown (maroon)
+    '06': '06',   # purple
+    '07': '07',   # orange (olive)
+    '08': '08',   # yellow
+    '09': '09',   # light green (lime)
+    '10': '10',   # teal (a green/blue cyan)
+    '11': '11',   # light cyan (cyan / aqua)
+    '12': '12',   # light blue (royal)
+    '13': '13',   # pink (light purple / fuchsia)
+    '14': '14',   # grey
+    '15': '15',   # light grey (silver)
+    '16': '\x02', # bold
+    '17': '\x1d', # italic
+    '18': '\x1f', # underline
+    '19': '\x16', # reverse video
+    '20': '\x0f', # reset formatting
+}
+
 TEMPLATES_DEFAULT = {
-    'f': bold('[{}]'),
+    'f': ESCAPE_CHARACTER + '16[{}]' + ESCAPE_CHARACTER + '16',
     'a': '<{}>',
     'd': '{}',
     'g': '{}',
-    'l': bold('→') + ' {}',
+    'l': ESCAPE_CHARACTER + '16→' + ESCAPE_CHARACTER + '16 {}',
     'p': '({})',
     's': '{}',
     't': '{}',
-    'y': bold('→') + ' {}',
+    'y': ESCAPE_CHARACTER + '16→' + ESCAPE_CHARACTER + '16 {}',
 }
 
 COMMANDS = {
@@ -520,13 +547,21 @@ def _config_get_formats(bot):
 def _config_get_templates(bot):
     templates = list()
     for field in TEMPLATES_DEFAULT:
+
+        # it's easier to ask forgiveness than it is to get permission
         try:
             template = bot.memory['rss']['templates']['default'][field]
         except KeyError:
             template = TEMPLATES_DEFAULT[field]
+
+        template_string = FeedFormater(bot, MockFeedReader(FEED_EXAMPLE)).template_to_irc(field + '|' + template)
+
+        # if the conversion did not work use the default template
+        if not template_string:
+            template = TEMPLATES_DEFAULT[field]
         templates.append(field + '|' + template)
     templates.sort()
-    bot.say(repr(','.join(templates))[1:-1])
+    bot.say(','.join(templates))
     bot.say(_config_templates_example(bot))
 
 
@@ -980,7 +1015,7 @@ class FeedFormater:
 
         post = ''
         for f in self.output:
-            post += templates[f].format(legend.get(f, '')) + ' '
+            post += self.template_to_irc(templates[f].format(legend.get(f, '')) + ' ')
 
         return post[:-1]
 
@@ -992,6 +1027,9 @@ class FeedFormater:
 
         # check if template contains exactly one pair of curly braces
         if template.count('{}') != 1:
+            return False
+
+        if not self.template_to_irc(template):
             return False
 
         return True
@@ -1008,6 +1046,114 @@ class FeedFormater:
         self.format = self.get_minimal()
         self.hashed, self.output, self.remainder = self._format_split(self.format, self.separator)
         return self.format
+
+    def template_to_irc(self, template):
+        irc = ''
+        code = ''
+        escape = False
+        bgcolor = False
+
+        for character in template:
+
+            # in bgcolor mode?
+            if bgcolor and not character == ESCAPE_CHARACTER:
+                code += character
+
+                # a background color must start with a dollar sign
+                if not code.startswith('$'):
+
+                    # add the next character
+                    irc += character
+                    code = ''
+                    bgcolor = False
+                    continue
+
+                # we expect exactly two digits
+                if len(code) < 3:
+                    continue
+
+                # get the two digits after the comma
+                key = code[1:]
+
+                # is it an escape code?
+                if key not in ESCAPE_CODE:
+                    return ''
+
+                # is it a color?
+                # no need to try ... except as all keys are integers
+                if not int(key) <= 15:
+                    return ''
+
+                # add a background color
+                irc += ',' + key
+                code = ''
+                bgcolor = False
+                continue
+
+            # start escape mode?
+            if not escape and character == ESCAPE_CHARACTER:
+                escape = True
+                bgcolor = False
+                continue
+
+            # in escape mode?
+            if escape:
+                code += character
+
+                # escaped escape character handling
+                if code == ESCAPE_CHARACTER:
+                    irc += ESCAPE_CHARACTER
+                    code = ''
+                    escape = False
+                    continue
+
+                # escaped dollar sign handling
+                if code == '$':
+                    irc += ','
+                    code = ''
+                    escape = False
+                    continue
+
+                # we expect exactly two digits
+                if len(code) < 2:
+                    continue
+
+                key = code[:2]
+
+                # check if we have a valid escape sequence
+                if key not in ESCAPE_CODE:
+                    return ''
+
+                # is it a color code?
+                # no need to try ... except as all keys are integers
+                if int(key) <= 15:
+
+                    # add the color escape character
+                    irc += ESCAPE_COLOR
+                           
+                    # add a foreground color
+                    irc += key
+
+                # not a color code
+                else:
+
+                    # add the escape code
+                    irc += ESCAPE_CODE[key]
+
+                # end escape mode
+                code = ''
+                escape = False
+                bgcolor = True
+                continue
+
+            # add the next character
+            irc += character
+
+        # escape mode should be off
+        if escape:
+            return ''
+
+        return irc
 
     def _format_get_fields(self, feedreader):
         feed = feedreader.get_feed()
