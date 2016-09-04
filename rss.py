@@ -7,11 +7,11 @@ Licensed under the GNU GENERAL PUBLIC LICENSE, Version 3
 This module posts rss feed items to irc channels
 """
 from __future__ import unicode_literals
-from sopel.formatting import bold
 from sopel.config.types import StaticSection, ListAttribute, ValidatedAttribute
 from sopel.logger import get_logger
 from sopel.module import commands, interval, require_admin
 from sopel.tools import SopelMemory
+import sopel.formatting
 import feedparser
 import hashlib
 import shlex
