@@ -217,6 +217,24 @@ MESSAGES = {
         'unable to save hash "{}" of feed "{}" to sqlite table "{}"',
 }
 
+FEED_EXAMPLE = '''<?xml version="1.0" encoding="utf-8" ?>
+<rss version="2.0" xml:base="http://www.site1.com/feed" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel>
+<title>Feed Title</title>
+<link>http://www.example.com/feed</link>
+
+<item>
+<title>Title</title>
+<link>http://www.example.com/feed</link>
+<description>Description</description>
+<summary>Summary</summary>
+<author>Author</author>
+<pubDate>Sat, 3 Sep 2016 10:00:00 +0000</pubDate>
+<guid isPermaLink="false">GUID</guid>
+</item>
+
+</channel>
+</rss>'''
 
 class RSSSection(StaticSection):
     feeds = ListAttribute('feeds')
@@ -298,11 +316,9 @@ def _rss_add(bot, args):
 
 
 def _rss_config(bot, args):
-    print(args)
     key = args[1]
     if key not in CONFIG:
         return
-
 
     value = ''
     if len(args) == 3:
@@ -310,8 +326,7 @@ def _rss_config(bot, args):
 
     if not value:
         # call get function
-        message = globals()[CONFIG[key]['func_get']](bot)
-        bot.say(message)
+        globals()[CONFIG[key]['func_get']](bot)
         return
 
     # call set function
@@ -495,11 +510,11 @@ def _config_concatenate_templates(bot):
 
 
 def _config_get_feeds(bot):
-    return _config_concatenate_feeds(bot)[0]
+    bot.say(_config_concatenate_feeds(bot)[0])
 
 
 def _config_get_formats(bot):
-    return _config_concatenate_formats(bot)[0] + ',' + FORMAT_DEFAULT
+    bot.say(_config_concatenate_formats(bot)[0] + ',' + FORMAT_DEFAULT)
 
 
 def _config_get_templates(bot):
@@ -511,7 +526,8 @@ def _config_get_templates(bot):
             template = TEMPLATES_DEFAULT[field]
         templates.append(field + '|' + template)
     templates.sort()
-    return ','.join(templates)
+    bot.say(','.join(templates))
+    bot.say(_config_templates_example(bot))
 
 
 # read config from disk to memory
@@ -569,6 +585,7 @@ def _config_set_formats(bot, value):
 def _config_set_templates(bot, value):
     templates = value.split(',')
     bot.memory['rss']['templates']['default'] = _config_split_templates(bot, templates)
+    bot.say(_config_templates_example(bot))
 
 
 def _config_split_feeds(bot, feeds):
@@ -627,6 +644,14 @@ def _config_split_templates(bot, templates):
         if FeedFormater(bot, FeedReader('')).is_template_valid(atoms[1]):
             result[atoms[0]] = atoms[1]
     return result
+
+
+def  _config_templates_example(bot):
+    feedreader = FeedReader(FEED_EXAMPLE)
+    feedformater = FeedFormater(bot, feedreader, 'fl+fadglpst')
+    feed = feedreader.get_feed()
+    item = feed['entries'][0]
+    return feedformater.get_post('Feedname', item)
 
 
 def _db_check_if_table_exists(bot, feedname):

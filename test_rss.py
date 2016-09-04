@@ -220,6 +220,7 @@ def test_rss_global_config_templates(bot):
     rss._rss(bot, ['config', 'templates'])
     expected = 'a|<{}>,d|{},f|' + bold('[{}]') + ',g|{},l|' + bold('→') + ' {}'
     expected += ',p|({}),s|{},t|{},y|' + bold('→') + ' {}\n'
+    expected += rss._config_templates_example(bot) + '\n'
     assert expected == bot.output
 
 
@@ -320,6 +321,7 @@ def test_rss_config_templates_list(bot):
     args = ['config', 'templates']
     rss._rss_config(bot, args)
     expected = 'a|<{}>,d|{},f|\x02[{}]\x02,g|{},l|\x02→\x02 {},p|({}),s|{},t|†{}†,y|\x02→\x02 {}' + '\n'
+    expected += rss._config_templates_example(bot) + '\n'
     assert expected == bot.output
 
 
@@ -634,8 +636,9 @@ templates = t|<<{}>>
 def test_config_set_feeds_get(bot_basic):
     feeds = '#channelA|feedA|' + FEED_BASIC + '|t+t,#channelB|feedB|' + FEED_BASIC + '|tl+tl'
     rss._config_set_feeds(bot_basic, feeds)
-    get = rss._config_get_feeds(bot_basic)
-    assert feeds == get
+    rss._config_get_feeds(bot_basic)
+    expected = feeds + '\n'
+    assert expected == bot_basic.output
 
 
 def test_config_set_feeds_exists(bot_basic):
@@ -648,9 +651,9 @@ def test_config_set_feeds_exists(bot_basic):
 def test_config_set_formats_get(bot):
     formats = 't+t,d+d'
     rss._config_set_formats(bot, formats)
-    get = rss._config_get_formats(bot)
-    expected = formats + ',' + rss.FORMAT_DEFAULT
-    assert expected == get
+    rss._config_get_formats(bot)
+    expected = formats + ',' + rss.FORMAT_DEFAULT + '\n'
+    assert expected == bot.output
 
 
 def test_config_set_formats_join(bot):
@@ -663,7 +666,8 @@ def test_config_set_formats_join(bot):
 def test_config_set_templates_get(bot):
     templates = 't|≈{}≈,s|√{}'
     rss._config_set_templates(bot, templates)
-    get = rss._config_get_templates(bot)
+    bot.output = ''
+    rss._config_get_templates(bot)
     expected_dict = dict()
     for f in rss.TEMPLATES_DEFAULT:
         expected_dict[f] = rss.TEMPLATES_DEFAULT[f]
@@ -672,8 +676,9 @@ def test_config_set_templates_get(bot):
     expected_list = list()
     for f in expected_dict:
         expected_list.append(f + '|' + expected_dict[f])
-    expected = ','.join(sorted(expected_list))
-    assert expected == get
+    expected = ','.join(sorted(expected_list)) + '\n'
+    expected += rss._config_templates_example(bot) + '\n'
+    assert expected == bot.output
 
 
 def test_config_set_templates_dict(bot):
@@ -732,6 +737,12 @@ def test_db_drop_table(bot):
     rss._db_drop_table(bot, 'feedname')
     result = rss._db_check_if_table_exists(bot, 'feedname')
     assert [] == result
+
+
+def test_config_templates_example(bot):
+    example = rss._config_templates_example(bot)
+    expected = '\x02[Feedname]\x02 <Author> Description GUID \x02→\x02 http://www.example.com/feed (2016-09-03 10:00) Description Title'
+    assert expected == example
 
 
 def test_db_get_numer_of_rows(bot):
