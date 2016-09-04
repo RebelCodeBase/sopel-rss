@@ -218,7 +218,7 @@ MESSAGES = {
 }
 
 FEED_EXAMPLE = '''<?xml version="1.0" encoding="utf-8" ?>
-<rss version="2.0" xml:base="http://www.site1.com/feed" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<rss version="2.0" xml:base="http://www.example.com/feed" xmlns:dc="http://purl.org/dc/elements/1.1/">
 <channel>
 <title>Feed Title</title>
 <link>http://www.example.com/feed</link>
