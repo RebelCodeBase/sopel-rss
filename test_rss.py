@@ -133,7 +133,7 @@ def _fixture_bot_setup(request):
 def _fixture_bot_add_data(bot, id, url):
     bot.memory['rss']['feeds']['feed'+id] = {'channel': '#channel' + id, 'name': 'feed' + id, 'url': url}
     bot.memory['rss']['hashes']['feed'+id] = rss.RingBuffer(100)
-    feedreader = MockFeedReader(FEED_VALID)
+    feedreader = rss.MockFeedReader(FEED_VALID)
     bot.memory['rss']['formats']['feeds']['feed'+id] = rss.FeedFormater(bot, feedreader)
     sql_create_table = 'CREATE TABLE ' + rss._digest_tablename('feed'+id) + ' (id INTEGER PRIMARY KEY, hash VARCHAR(32) UNIQUE)'
     bot.db.execute(sql_create_table)
@@ -178,30 +178,17 @@ def bot_rss_update(request):
 
 @pytest.fixture(scope="module")
 def feedreader_feed_valid():
-    return MockFeedReader(FEED_VALID)
+    return rss.MockFeedReader(FEED_VALID)
 
 
 @pytest.fixture(scope="module")
 def feedreader_feed_invalid():
-    return MockFeedReader(FEED_INVALID)
+    return rss.MockFeedReader(FEED_INVALID)
 
 
 @pytest.fixture(scope="module")
 def feedreader_feed_item_neither_title_nor_description():
-    return MockFeedReader(FEED_ITEM_NEITHER_TITLE_NOR_DESCRIPTION)
-
-
-# Implementing a mock rss feed get_feeder
-class MockFeedReader:
-    def __init__(self, url):
-        self.url = url
-
-    def get_feed(self):
-        feed = feedparser.parse(self.url)
-        return feed
-
-    def get_tinyurl(self, url):
-        return 'https://tinyurl.com/govvpmm'
+    return rss.MockFeedReader(FEED_ITEM_NEITHER_TITLE_NOR_DESCRIPTION)
 
 
 def test_rss_global_too_many_parameters(bot):
@@ -741,7 +728,7 @@ def test_db_drop_table(bot):
 
 def test_config_templates_example(bot):
     example = rss._config_templates_example(bot)
-    expected = '\x02[Feedname]\x02 <Author> Description GUID \x02→\x02 http://www.example.com/feed (2016-09-03 10:00) Description Title'
+    expected = '<Author> Description \x02[Feedname]\x02 GUID \x02→\x02 https://github.com/RebelCodeBase/sopel-rss (2016-09-03 10:00) Description Title \x02→\x02 https://tinyurl.com/govvpmm'
     assert expected == example
 
 

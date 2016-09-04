@@ -225,7 +225,7 @@ FEED_EXAMPLE = '''<?xml version="1.0" encoding="utf-8" ?>
 
 <item>
 <title>Title</title>
-<link>http://www.example.com/feed</link>
+<link>https://github.com/RebelCodeBase/sopel-rss</link>
 <description>Description</description>
 <summary>Summary</summary>
 <author>Author</author>
@@ -647,8 +647,8 @@ def _config_split_templates(bot, templates):
 
 
 def  _config_templates_example(bot):
-    feedreader = FeedReader(FEED_EXAMPLE)
-    feedformater = FeedFormater(bot, feedreader, 'fl+fadglpst')
+    feedreader = MockFeedReader(FEED_EXAMPLE)
+    feedformater = FeedFormater(bot, feedreader, 'fl+adfglpsty')
     feed = feedreader.get_feed()
     item = feed['entries'][0]
     return feedformater.get_post('Feedname', item)
@@ -1137,7 +1137,7 @@ class FeedReader:
             feed = feedparser.parse(self.url)
             return feed
         except:
-            return False
+            return dict()
 
     def get_tinyurl(self, url):
         tinyurlapi = 'https://tinyurl.com/api-create.php'
@@ -1146,6 +1146,22 @@ class FeedReader:
         response = urllib.request.urlopen(req)
         tinyurl = response.read().decode('utf-8')
         return tinyurl
+
+
+# Implementing a mock rss feed reader
+class MockFeedReader:
+    def __init__(self, url):
+        self.url = url
+
+    def get_feed(self):
+        try:
+            feed = feedparser.parse(self.url)
+            return feed
+        except:
+            return dict()
+
+    def get_tinyurl(self, url):
+        return 'https://tinyurl.com/govvpmm'
 
 
 # Implementing a ring buffer
