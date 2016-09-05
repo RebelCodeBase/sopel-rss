@@ -185,6 +185,10 @@ Example: *.rss config templates p|%09({})%20*
 
 Print the time in parentheses and in bright green. Stop the formatting afterwards so that the following fields are not affected by the color change.
 
+Example: *.rss config templates "l| → {}"*
+
+Include spaces in a template by using quotes.
+
 Example: *.rss config templates f|%13$15%16[{}]%16*
 
 Print the feedname in pink on silver in bold. The %16 will stop the bold formatting but as there is no %20 to reset formatting, everything after the field f (depending on the format) will be printed in pink on silver as well.
