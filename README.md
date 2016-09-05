@@ -131,17 +131,17 @@ The feedname, link, summary and title will be used to hash the feed item. If any
 Template strings define how the different fields of a feed item will be posted to the irc channel. You may override some or all of the default template strings. Curly braces {} will be replaced by the field value. These are the default templates:
 
 
-|field|template      |
-|-----|--------------|
-|f    |%1616[{}]%2020|
-|a    |{}            |
-|d    |{}            |
-|g    |{}            |
-|l    |%1616→%2020 {}|
-|p    |{}            |
-|s    |{}            |
-|t    |{}            |
-|y    |%1616→%2020 {}|
+|field|template  |
+|-----|----------|
+|f    |%16[{}]%20|
+|a    |{}        |
+|d    |{}        |
+|g    |{}        |
+|l    |%16→%20 {}|
+|p    |{}        |
+|s    |{}        |
+|t    |{}        |
+|y    |%16→%20 {}|
 
 You can use nearly any character you like but the percent sign % has a special meaning: it is the escape sign. If you want the bot to print a percent sign then you have to specify it twice: if the title of an item is "itemtitle" then *t|%%{}* will output "%itemtitle". The same is true for a comma after an escape sequence: if the title of an item is "itemtitle" then *t|%17%,{}%20* will output ",itemtitle" in italics.
 
