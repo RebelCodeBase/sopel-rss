@@ -118,11 +118,11 @@ A *format* string defines which feed item fields be be hashed, i.e. when two fee
 
 The feedname is a custom name specified as a parameter to *.rss add* an not a feed item field. guid is a unique identifiert and published is the date and time of publication. tinyurl will work like the field link but it will shorten the url through [tinyurl](https://www.tinyurl.com/) first.
 
-#### Example: *fl+tl*
+#### Example: *.rss config formats fl+tl*
 
 The feedname and the link of the rss feed item will be used to hash the feed item. If an item of a different feed has the same link it will be posted again by the bot. The bot will post the feed item title followed by the feed item link.
 
-#### Example: *flst+tal*
+#### Example: *.rss config formats flst+tal*
 
 The feedname, link, summary and title will be used to hash the feed item. If any of these fields change in the feed the feed item will be posted again. The bot will post the title, author and link of the feed item but not the feedname.
 
