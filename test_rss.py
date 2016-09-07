@@ -695,6 +695,18 @@ templates = t|<<{}>>
     assert expected == config
 
 
+def test_config_set_feeds_change_returns_true(bot_basic):
+    feeds = '#channel|feed|' + FEED_BASIC + '|fl+ftl'
+    result = rss._config_set_feeds(bot_basic, feeds)
+    assert True == result
+
+
+def test_config_set_feeds_no_change_returns_false(bot_basic):
+    feeds = ''
+    result = rss._config_set_feeds(bot_basic, feeds)
+    assert False == result
+
+
 def test_config_set_feeds_get(bot_basic):
     feeds = '#channelA|feedA|' + FEED_BASIC + '|t+t,#channelB|feedB|' + FEED_BASIC + '|tl+tl'
     rss._config_set_feeds(bot_basic, feeds)
@@ -710,6 +722,18 @@ def test_config_set_feeds_exists(bot_basic):
     assert True == result
 
 
+def test_config_set_formats_change_returns_true(bot):
+    formats = 't+t'
+    result = rss._config_set_formats(bot, formats)
+    assert True == result
+
+
+def test_config_set_formats_no_change_returns_false(bot):
+    formats = ''
+    result = rss._config_set_formats(bot, formats)
+    assert False == result
+
+
 def test_config_set_formats_get(bot):
     formats = 't+t,d+d'
     rss._config_set_formats(bot, formats)
@@ -723,6 +747,18 @@ def test_config_set_formats_join(bot):
     rss._config_set_formats(bot, formats)
     formats_bot = ','.join(bot.memory['rss']['formats']['default'])
     assert formats == formats_bot
+
+
+def test_config_set_templates_change_returns_true(bot):
+    templates = 't|≈{}≈'
+    result = rss._config_set_templates(bot, templates)
+    assert True == result
+
+
+def test_config_set_templates_no_change_returns_false(bot):
+    templates = ''
+    result = rss._config_set_templates(bot, templates)
+    assert False == result
 
 
 def test_config_set_templates_get(bot):
@@ -764,27 +800,31 @@ def test_config_split_feeds_invalid(bot):
 
 def test_config_split_formats_valid(bot):
     formats = ['yt+yt','ftla+ft']
-    formats_split = rss._config_split_formats(bot, formats)
+    rss._config_split_formats(bot, formats)
+    formats_split = bot.memory['rss']['formats']['default']
     expected = ['yt+yt', 'ftla+ft']
     assert expected == formats_split
 
 
 def test_config_split_formats_invalid(bot):
     formats = ['abcd','ftla+ft']
-    formats_split = rss._config_split_formats(bot, formats)
+    result = rss._config_split_formats(bot, formats)
+    formats_split = bot.memory['rss']['formats']['default']
     expected = ['ftla+ft']
     assert expected == formats_split
 
 
 def test_config_split_templates_valid(bot):
     templates = { 't|>>{}<<' }
-    templates_split = rss._config_split_templates(bot, templates)
+    rss._config_split_templates(bot, templates)
+    templates_split =  bot.memory['rss']['templates']['default']
     assert templates_split['t'] == '>>{}<<'
 
 
 def test_config_split_templates_invalid(bot):
     templates = { 't|>><<' }
-    templates_split = rss._config_split_templates(bot, templates)
+    rss._config_split_templates(bot, templates)
+    templates_split =  bot.memory['rss']['templates']['default']
     assert templates_split['t'] == '{}'
 
 

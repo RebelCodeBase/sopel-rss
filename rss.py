@@ -357,7 +357,8 @@ def _rss_config(bot, args):
         return
 
     # call set function
-    globals()[CONFIG[key]['func_set']](bot, value)
+    if globals()[CONFIG[key]['func_set']](bot, value):
+        _config_save(bot)
 
 
 def _rss_del(bot, args):
@@ -395,6 +396,7 @@ def _rss_format(bot, args):
     format_new = bot.memory['rss']['formats']['feeds'][feedname].set_format(format)
 
     if format == format_new:
+        _config_save(bot)
         message = MESSAGES['format_of_feed_has_been_set_to'].format(feedname, format_new)
         LOGGER.debug(message)
         bot.say(message)
@@ -480,19 +482,6 @@ def _rss_update(bot, args=[]):
             _feed_update(bot, feedreader, feedname, False)
 
 
-def _config_define(bot):
-    bot.config.define_section('rss', RSSSection)
-    bot.memory['rss'] = SopelMemory()
-    bot.memory['rss']['feeds'] = dict()
-    bot.memory['rss']['hashes'] = dict()
-    bot.memory['rss']['formats'] = dict()
-    bot.memory['rss']['formats']['feeds'] = dict()
-    bot.memory['rss']['formats']['default'] = list()
-    bot.memory['rss']['templates'] = dict()
-    bot.memory['rss']['templates']['default'] = dict()
-    return bot
-
-
 def _config_concatenate_channels(bot):
     channels = bot.config.core.channels
     for feedname, feed in bot.memory['rss']['feeds'].items():
@@ -536,6 +525,19 @@ def _config_concatenate_templates(bot):
     return [','.join(templates)]
 
 
+def _config_define(bot):
+    bot.config.define_section('rss', RSSSection)
+    bot.memory['rss'] = SopelMemory()
+    bot.memory['rss']['feeds'] = dict()
+    bot.memory['rss']['hashes'] = dict()
+    bot.memory['rss']['formats'] = dict()
+    bot.memory['rss']['formats']['feeds'] = dict()
+    bot.memory['rss']['formats']['default'] = list()
+    bot.memory['rss']['templates'] = dict()
+    bot.memory['rss']['templates']['default'] = dict()
+    return bot
+
+
 def _config_get_feeds(bot):
     bot.say(_config_concatenate_feeds(bot)[0])
 
@@ -574,11 +576,11 @@ def _config_read(bot):
 
     # read default formats from config file
     if bot.config.rss.formats and bot.config.rss.formats[0]:
-        bot.memory['rss']['formats']['default'] = _config_split_formats(bot, bot.config.rss.formats)
+        _config_split_formats(bot, bot.config.rss.formats)
 
     # read default templates from config file
     if bot.config.rss.templates and bot.config.rss.templates[0]:
-        bot.memory['rss']['templates']['default'] = _config_split_templates(bot, bot.config.rss.templates)
+        _config_split_templates(bot, bot.config.rss.templates)
 
     message = 'read config from disk'
     LOGGER.debug(message)
@@ -609,21 +611,24 @@ def _config_save(bot):
 
 def _config_set_feeds(bot, value):
     feeds = value.split(',')
-    _config_split_feeds(bot, feeds)
+    return _config_split_feeds(bot, feeds)
 
 
 def _config_set_formats(bot, value):
     formats = value.split(',')
-    bot.memory['rss']['formats']['default'] = _config_split_formats(bot, formats)
+    return _config_split_formats(bot, formats)
 
 
 def _config_set_templates(bot, value):
     templates = value.split(',')
-    bot.memory['rss']['templates']['default'] = _config_split_templates(bot, templates)
+    result = _config_split_templates(bot, templates)
     _config_get_templates(bot)
+    return result
 
 
 def _config_split_feeds(bot, feeds):
+    before = len(bot.memory['rss']['feeds'])
+
     for feed in feeds:
 
         # split feed by pipes
@@ -646,6 +651,10 @@ def _config_split_feeds(bot, feeds):
             _feed_add(bot, channel, feedname, url, format)
             _hashes_read(bot, feedname)
 
+    after = len(bot.memory['rss']['feeds'])
+
+    return before != after
+
 
 def _config_split_formats(bot, formats):
     result = list()
@@ -664,20 +673,26 @@ def _config_split_formats(bot, formats):
         result.append(format)
 
     if result:
-        return result
-    return FORMAT_DEFAULT
+        bot.memory['rss']['formats']['default'] = result
+        return True
+
+    bot.memory['rss']['formats']['default'] = FORMAT_DEFAULT
+    return False
 
 
 def _config_split_templates(bot, templates):
-    result = dict()
+    result = False
 
     for f in TEMPLATES_DEFAULT:
-        result[f] = TEMPLATES_DEFAULT[f]
+        bot.memory['rss']['templates']['default'][f] = TEMPLATES_DEFAULT[f]
 
     for template in templates:
         atoms = template.split('|')
-        if FeedFormater(bot, FeedReader('')).is_template_valid(atoms[1]):
-            result[atoms[0]] = atoms[1]
+        if len(atoms) == 2:
+            if FeedFormater(bot, FeedReader('')).is_template_valid(atoms[1]):
+                bot.memory['rss']['templates']['default'][atoms[0]] = atoms[1]
+                result = True
+
     return result
 
 
