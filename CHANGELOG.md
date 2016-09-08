@@ -13,7 +13,7 @@
 - added missing parts of configurable default templates
 - added description of templates to README.md
 
-## [0.2.0](https://github.com/RebelCodeBase/sopel-rss/tree/v0.2.0) (2016-09-03) (nearly)feature complete
+## [0.2.0](https://github.com/RebelCodeBase/sopel-rss/tree/v0.2.0) (2016-09-03) (nearly) feature complete
 
 - added configurable default formats
 - added configurable default templates
