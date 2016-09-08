@@ -173,7 +173,7 @@ CONFIG = {
         'synopsis': 'formats = <format1>,<format2>,...',
         'helptext': ['if no format is defined for a feed the bot will try these formats and the global default format (' + FORMAT_DEFAULT + ') one by one until it finds a valid format.',
                      'a format is valid if the fields used in the format do exist in the feed items.'],
-        'examples': ['formats = pl+fpatl, plfpl'],
+        'examples': ['formats = l+fpatl, l+fptl'],
         'func_get': '_config_get_formats',
         'func_set': '_config_set_formats'
     },

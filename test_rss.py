@@ -292,6 +292,12 @@ def test_rss_config_feeds_list(bot):
     assert expected == bot.output
 
 
+def test_rss_config_formats_default(bot):
+    rss._rss_config(bot, ['config', 'formats'])
+    expected = rss.FORMAT_DEFAULT + '\n'
+    assert expected == bot.output
+
+
 def test_rss_config_formats_list(bot):
     bot.memory['rss']['formats']['default'] = ['lts+flts','at+at']
     args = ['config', 'formats']
