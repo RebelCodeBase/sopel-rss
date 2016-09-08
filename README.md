@@ -24,7 +24,7 @@ All commands require owner or admin privileges.
 
 Add the feed *\<url\>* to *\<channel\>* and call it *\<name\>*. Optionally, a format can be specified, see section Format. The feed will be read approximately every minute and new items will be automatically posted to *\<channel\>*.
 
-### rss config &mdash; get and set configuration values
+### rss config &mdash; get or set configuration values
 
 #### Synopsis: *.rss config \<key\> [\<value\>]*
 
