@@ -1315,7 +1315,7 @@ class FeedReader:
         data = urllib.parse.urlencode({'url': url}).encode("utf-8")
         req = urllib.request.Request(tinyurlapi, data)
         tinyurl = urllib.request.urlopen(req).read().decode('utf-8')
-        if tinyurl.startswith('https://tinyurl.com/'):
+        if tinyurl.startswith('http'):
             return tinyurl
         return url
 
