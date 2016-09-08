@@ -42,7 +42,7 @@ Delete the feed called \<name\>.
 
 Get the item fields of the feed *\<name\>*. 
 
-### rss format &mdash; set the format of a feed
+### rss format &mdash; get or set the format of a feed
 
 #### Synopsis: *.rss format \<name\> [\<format\>]*
 
