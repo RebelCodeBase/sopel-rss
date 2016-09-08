@@ -1020,7 +1020,6 @@ class FeedFormater:
         return output
 
     def get_post(self, feedname, item):
-        print(self.format)
         saneitem = dict()
         saneitem['author'] = self._value_sanitize('author', item)
         saneitem['description'] = self._value_sanitize('description', item)
