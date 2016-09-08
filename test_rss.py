@@ -426,8 +426,16 @@ def test_rss_fields_get_custom(bot):
 
 
 def test_rss_format_feed_nonexistent(bot):
-    rss._rss_format(bot, ['format', 'abcd', ''])
+    rss._rss_format(bot, ['format', 'abcd'])
     expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
+    assert expected == bot.output
+
+
+def test_rss_format_feed_get(bot):
+    rss._rss_format(bot, ['format', 'feed1', 'yt+ytl'])
+    bot.output = ''
+    rss._rss_format(bot, ['format', 'feed1'])
+    expected = rss.MESSAGES['format_of_feed_is'].format('feed1', 'yt+ytl') + '\n'
     assert expected == bot.output
 
 

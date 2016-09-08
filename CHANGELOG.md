@@ -4,8 +4,9 @@
 
 ## unreleased
 
+- added option to get the format of a feed
 - fixed bugs
-- reformat and add examples to README.md
+- reformated and added examples to README.md
 
 ## [0.2.1](https://github.com/RebelCodeBase/sopel-rss/tree/v0.2.1) (2016-09-05) default templates
 

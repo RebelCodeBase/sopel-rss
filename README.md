@@ -44,9 +44,9 @@ Get the item fields of the feed *\<name\>*.
 
 ### rss format &mdash; set the format of a feed
 
-#### Synopsis: *.rss format \<name\> \<format\>*
+#### Synopsis: *.rss format \<name\> [\<format\>]*
 
-Set the format of the feed *\<name\>* to *\<format\>*. 
+Get the format of the feed *\<name\>*. Or set the format of the feed *\<name\>* to *\<format\>*. 
 
 ### rss get &mdash; read a feed and post new items
 

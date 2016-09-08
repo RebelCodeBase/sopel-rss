@@ -105,16 +105,17 @@ COMMANDS = {
         'function': '_rss_fields'
     },
     'format': {
-        'synopsis': 'synopsis: {}rss format <name> <format>',
-        'helptext': ['set the format string for the feed identified by <name>.',
+        'synopsis': 'synopsis: {}rss format <name> [<format>]',
+        'helptext': ['get the format string for the feed identified by <name>.',
+                     'or set the format string for the feed identified by <name>.',
                      'if <format> is omitted the default format "' + FORMAT_DEFAULT + '" will be used. if the default format is not valid for this feed a minimal format will be used.',
                      'a format string is separated by the separator "' + FORMAT_SEPARATOR + '"',
                      'the left part of the format string indicates the fields that will be hashed for an item. if you change this part all feed items will be reposted.',
                      'the fields determine when a feed item will be reposted. if you see duplicates then first look at this part of the format string.',
                      'the right part of the format string determines which feed item fields will be posted.'],
         'examples': ['{}rss format fl+ftl'],
-        'required': 2,
-        'optional': 0,
+        'required': 1,
+        'optional': 1,
         'function': '_rss_format'
     },
     'get': {
@@ -220,6 +221,8 @@ MESSAGES = {
         'feed "{}" doesn\'t exist!',
     'fields_of_feed_are':
         'fields of feed "{}" are "{}"',
+    'format_of_feed_is':
+        'format of feed "{}" is "{}"',
     'format_of_feed_has_been_set_to':
         'format of feed "{}" has been set to "{}"',
     'get_help_on_config_keys_with':
@@ -387,12 +390,19 @@ def _rss_fields(bot, args):
 
 def _rss_format(bot, args):
     feedname = args[1]
-    format = args[2]
+
     if not _feed_exists(bot, feedname):
         message = MESSAGES['feed_does_not_exist'].format(feedname)
         bot.say(message)
         return
 
+    if len(args) == 2:
+        format = bot.memory['rss']['formats']['feeds'][feedname].get_format()
+        message = MESSAGES['format_of_feed_is'].format(feedname, format)
+        bot.say(message)
+        return
+
+    format = args[2]
     format_new = bot.memory['rss']['formats']['feeds'][feedname].set_format(format)
 
     if format == format_new:
@@ -1304,8 +1314,9 @@ class FeedReader:
         tinyurlapi = 'https://tinyurl.com/api-create.php'
         data = urllib.parse.urlencode({'url': url}).encode("utf-8")
         req = urllib.request.Request(tinyurlapi, data)
-        response = urllib.request.urlopen(req)
-        tinyurl = response.read().decode('utf-8')
+        tinyurl = urllib.request.urlopen(req).read().decode('utf-8')
+        if tinyurl == 'Error':
+            return url
         return tinyurl
 
 
