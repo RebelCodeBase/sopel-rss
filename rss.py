@@ -1315,9 +1315,9 @@ class FeedReader:
         data = urllib.parse.urlencode({'url': url}).encode("utf-8")
         req = urllib.request.Request(tinyurlapi, data)
         tinyurl = urllib.request.urlopen(req).read().decode('utf-8')
-        if tinyurl == 'Error':
-            return url
-        return tinyurl
+        if tinyurl.startswith('https://tinyurl.com/'):
+            return tinyurl
+        return url
 
 
 # Implementing a mock rss feed reader
