@@ -283,8 +283,8 @@ def test_rss_add_feed_add(bot):
 
 
 def test_rss_config_feeds_list(bot):
-    rss._rss_format(bot, ['format', 'feed1', 'asl+als'])
     rss._rss_add(bot, ['add', '#channel2', 'feed2', FEED_VALID, 'p+tlpas'])
+    rss._rss_format(bot, ['format', 'feed1', 'asl+als'])
     bot.output = ''
     args = ['config', 'feeds']
     rss._rss_config(bot, args)
@@ -297,6 +297,15 @@ def test_rss_config_formats_list(bot):
     args = ['config', 'formats']
     rss._rss_config(bot, args)
     expected = 'lts+flts,at+at,fl+ftl' + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_formats_output(bot):
+    rss._rss_config(bot, ['config', 'formats', 't+t'])
+    rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID])
+    bot.output = ''
+    rss._rss_get(bot, ['get', 'feedname'])
+    expected = 'Title 1\nTitle 2\nTitle 3\n'
     assert expected == bot.output
 
 
@@ -679,6 +688,7 @@ def test_config_read_template_custom(bot_basic):
 
 
 def test_config_save_writes(bot_config_save):
+    bot_config_save.memory['rss']['formats']['feeds']['feed1'].set_format('fl+ftl')
     bot_config_save.memory['rss']['formats']['default'] = ['ft+ftpal']
     for t in rss.TEMPLATES_DEFAULT:
         bot_config_save.memory['rss']['templates']['default'][t] = rss.TEMPLATES_DEFAULT[t]

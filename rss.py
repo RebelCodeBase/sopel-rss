@@ -553,7 +553,11 @@ def _config_get_feeds(bot):
 
 
 def _config_get_formats(bot):
-    bot.say(_config_concatenate_formats(bot)[0] + ',' + FORMAT_DEFAULT)
+    formats = _config_concatenate_formats(bot)[0]
+    if formats:
+        formats += ','
+    formats += FORMAT_DEFAULT
+    bot.say(formats)
 
 
 def _config_get_templates(bot):
@@ -954,8 +958,11 @@ class FeedFormater:
         self.bot = bot
         self.feedreader = feedreader
         self.separator = FORMAT_SEPARATOR
-        self.set_minimal()
-        self.set_format(format)
+        if format:
+            self.set_minimal()
+            self.set_format(format)
+        else:
+            self.format = ''
 
     def get_default(self):
         for format in self.bot.memory['rss']['formats']['default']:
@@ -963,7 +970,9 @@ class FeedFormater:
         return FORMAT_DEFAULT
 
     def get_format(self):
-        return self.format
+        if self.format:
+            return self.format
+        return self.get_default()
 
     def get_fields(self):
         return self._format_get_fields(self.feedreader)
@@ -991,10 +1000,14 @@ class FeedFormater:
         }
 
         signature = ''
-        for f in self.hashed:
+        for f in self.get_hashed():
             signature += legend.get(f, '')
 
         return hashlib.md5(signature.encode('utf-8')).hexdigest()
+
+    def get_hashed(self):
+        hashed, output, remainder = self._format_split(self.get_format(), self.separator)
+        return hashed
 
     def get_minimal(self):
         fields = self._format_get_fields(self.feedreader)
@@ -1002,7 +1015,12 @@ class FeedFormater:
             return 'ft+ft'
         return 'fd+fd'
 
+    def get_output(self):
+        hashed, output, remainder = self._format_split(self.get_format(), self.separator)
+        return output
+
     def get_post(self, feedname, item):
+        print(self.format)
         saneitem = dict()
         saneitem['author'] = self._value_sanitize('author', item)
         saneitem['description'] = self._value_sanitize('description', item)
@@ -1012,10 +1030,10 @@ class FeedFormater:
         saneitem['title'] = self._value_sanitize('title', item)
 
         pubtime = ''
-        if 'p' in self.output:
+        if 'p' in self.get_output():
             pubtime = time.strftime('%Y-%m-%d %H:%M', item['published_parsed'])
         shorturl = ''
-        if 'y' in self.output:
+        if 'y' in self.get_output():
             shorturl = self.feedreader.get_tinyurl(saneitem['link'])
 
         legend = {
@@ -1039,7 +1057,7 @@ class FeedFormater:
                 templates[t] = self.bot.memory['rss']['templates']['default'][t]
 
         post = ''
-        for f in self.output:
+        for f in self.get_output():
             post += self.template_to_irc(templates[f].format(legend.get(f, '')) + ' ')
 
         return post[:-1]
@@ -1064,12 +1082,10 @@ class FeedFormater:
         if format_new and format_new != format_sanitized:
             return self.format
         self.format = format_sanitized
-        self.hashed, self.output, self.remainder = self._format_split(self.format, self.separator)
         return self.format
 
     def set_minimal(self):
         self.format = self.get_minimal()
-        self.hashed, self.output, self.remainder = self._format_split(self.format, self.separator)
         return self.format
 
     def template_to_irc(self, template):
