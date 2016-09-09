@@ -383,7 +383,7 @@ def _rss_fields(bot, args):
         bot.say(message)
         return
 
-    fields = bot.memory['rss']['formats']['feeds'][feedname].get_fields()
+    fields = bot.memory['rss']['options'][feedname].get_fields()
     message = MESSAGES['fields_of_feed_are'].format(feedname, fields)
     bot.say(message)
 
@@ -397,13 +397,13 @@ def _rss_format(bot, args):
         return
 
     if len(args) == 2:
-        format = bot.memory['rss']['formats']['feeds'][feedname].get_format()
+        format = bot.memory['rss']['options'][feedname].get_format()
         message = MESSAGES['format_of_feed_is'].format(feedname, format)
         bot.say(message)
         return
 
     format = args[2]
-    format_new = bot.memory['rss']['formats']['feeds'][feedname].set_format(format)
+    format_new = bot.memory['rss']['options'][feedname].set_format(format)
 
     if format == format_new:
         _config_save(bot)
@@ -504,8 +504,8 @@ def _config_concatenate_feeds(bot):
     feeds = []
     for feedname, feed in bot.memory['rss']['feeds'].items():
         newfeed = feed['channel'] + '|' + feed['name'] + '|' + feed['url']
-        format = bot.memory['rss']['formats']['feeds'][feedname].get_format()
-        format_default = bot.memory['rss']['formats']['feeds'][feedname].get_default()
+        format = bot.memory['rss']['options'][feedname].get_format()
+        format_default = bot.memory['rss']['options'][feedname].get_default()
         if format != format_default:
             newfeed += '|' + format
         feeds.append(newfeed)
@@ -515,7 +515,7 @@ def _config_concatenate_feeds(bot):
 
 def _config_concatenate_formats(bot):
     formats = list()
-    for format in bot.memory['rss']['formats']['default']:
+    for format in bot.memory['rss']['formats']:
 
         # only save formats that differ from the default
         if not format == FORMAT_DEFAULT:
@@ -525,8 +525,8 @@ def _config_concatenate_formats(bot):
 
 def _config_concatenate_templates(bot):
     templates = list()
-    for field in bot.memory['rss']['templates']['default']:
-        template = bot.memory['rss']['templates']['default'][field]
+    for field in bot.memory['rss']['templates']:
+        template = bot.memory['rss']['templates'][field]
 
         #only save template that differ from the default
         if not TEMPLATES_DEFAULT[field] == template:
@@ -541,10 +541,10 @@ def _config_define(bot):
     bot.memory['rss']['feeds'] = dict()
     bot.memory['rss']['hashes'] = dict()
     bot.memory['rss']['formats'] = dict()
-    bot.memory['rss']['formats']['feeds'] = dict()
-    bot.memory['rss']['formats']['default'] = list()
+    bot.memory['rss']['options'] = dict()
+    bot.memory['rss']['formats'] = list()
     bot.memory['rss']['templates'] = dict()
-    bot.memory['rss']['templates']['default'] = dict()
+    bot.memory['rss']['templates'] = dict()
     return bot
 
 
@@ -566,11 +566,11 @@ def _config_get_templates(bot):
 
         # it's easier to ask forgiveness than it is to get permission
         try:
-            template = bot.memory['rss']['templates']['default'][field]
+            template = bot.memory['rss']['templates'][field]
         except KeyError:
             template = TEMPLATES_DEFAULT[field]
 
-        template_string = FeedFormater(bot, MockFeedReader(FEED_EXAMPLE)).template_to_irc(field + '|' + template)
+        template_string = Options(bot).template_to_irc(field + '|' + template)
 
         # if the conversion did not work use the default template
         if not template_string:
@@ -682,15 +682,15 @@ def _config_split_formats(bot, formats):
         # check if format contains only valid fields
         if not set(format) <= set(fields + FORMAT_SEPARATOR):
             continue
-        if not FeedFormater(bot, FeedReader('')).is_format_valid(format, FORMAT_SEPARATOR, fields):
+        if not Options(bot).is_format_valid(format, FORMAT_SEPARATOR, fields):
             continue
         result.append(format)
 
     if result:
-        bot.memory['rss']['formats']['default'] = result
+        bot.memory['rss']['formats'] = result
         return True
 
-    bot.memory['rss']['formats']['default'] = FORMAT_DEFAULT
+    bot.memory['rss']['formats'] = FORMAT_DEFAULT
     return False
 
 
@@ -698,13 +698,13 @@ def _config_split_templates(bot, templates):
     result = False
 
     for f in TEMPLATES_DEFAULT:
-        bot.memory['rss']['templates']['default'][f] = TEMPLATES_DEFAULT[f]
+        bot.memory['rss']['templates'][f] = TEMPLATES_DEFAULT[f]
 
     for template in templates:
         atoms = template.split('|')
         if len(atoms) == 2:
-            if FeedFormater(bot, FeedReader('')).is_template_valid(atoms[1]):
-                bot.memory['rss']['templates']['default'][atoms[0]] = atoms[1]
+            if Options(bot).is_template_valid(atoms[1]):
+                bot.memory['rss']['templates'][atoms[0]] = atoms[1]
                 result = True
 
     return result
@@ -712,10 +712,10 @@ def _config_split_templates(bot, templates):
 
 def  _config_templates_example(bot):
     feedreader = MockFeedReader(FEED_EXAMPLE)
-    feedformater = FeedFormater(bot, feedreader, 'fl+adfglpsty')
+    options = Options(bot, feedreader, 'fl+adfglpsty')
     feed = feedreader.get_feed()
     item = feed['entries'][0]
-    return feedformater.get_post('Feedname', item)
+    return options.get_post('Feedname', item)
 
 
 def _db_check_if_table_exists(bot, feedname):
@@ -812,9 +812,9 @@ def _feed_add(bot, channel, feedname, url, format=''):
     message = MESSAGES['added_ring_buffer_for_feed'].format(feedname)
     LOGGER.debug(message)
 
-    # create new FeedFormatter to handle feed hashing and output
+    # create new Options to handle feed hashing and output
     feedreader = FeedReader(url)
-    bot.memory['rss']['formats']['feeds'][feedname] = FeedFormater(bot, feedreader, format)
+    bot.memory['rss']['options'][feedname] = Options(bot, feedreader, format)
     message = MESSAGES['added_feed_formater_for_feed'].format(feedname)
     LOGGER.debug(message)
 
@@ -886,7 +886,7 @@ def _feed_exists(bot, feedname):
 
 def _feed_list(bot, feedname):
     feed = bot.memory['rss']['feeds'][feedname]
-    format_feed = bot.memory['rss']['formats']['feeds'][feedname].get_format()
+    format_feed = bot.memory['rss']['options'][feedname].get_format()
     bot.say('{} {} {} {}'.format(feed['channel'], feed['name'], feed['url'], format_feed))
 
 
@@ -903,13 +903,13 @@ def _feed_update(bot, feedreader, feedname, chatty):
 
     # bot.say new or all items
     for item in reversed(feed['entries']):
-        hash = bot.memory['rss']['formats']['feeds'][feedname].get_hash(feedname, item)
+        hash = bot.memory['rss']['options'][feedname].get_hash(feedname, item)
         new_item = not hash in bot.memory['rss']['hashes'][feedname].get()
         if chatty or new_item:
             if new_item:
                 bot.memory['rss']['hashes'][feedname].append(hash)
                 _db_save_hash_to_database(bot, feedname, hash)
-            message = bot.memory['rss']['formats']['feeds'][feedname].get_post(feedname, item)
+            message = bot.memory['rss']['options'][feedname].get_post(feedname, item)
             LOGGER.debug(message)
             bot.say(message, channel)
 
@@ -950,13 +950,16 @@ def _help_text(bot, type, cmd):
 
 
 # Implementing an rss format handler
-class FeedFormater:
+class Options:
 
     LOGGER = get_logger(__name__)
 
-    def __init__(self, bot, feedreader, format=''):
+    def __init__(self, bot, feedreader = '', format = ''):
         self.bot = bot
-        self.feedreader = feedreader
+        if feedreader == '':
+            self.feedreader = FeedReader('')
+        else:
+            self.feedreader = feedreader
         self.separator = FORMAT_SEPARATOR
         if format:
             self.set_minimal()
@@ -965,7 +968,7 @@ class FeedFormater:
             self.format = ''
 
     def get_default(self):
-        for format in self.bot.memory['rss']['formats']['default']:
+        for format in self.bot.memory['rss']['formats']:
             return format
         return FORMAT_DEFAULT
 
@@ -1051,9 +1054,9 @@ class FeedFormater:
         for t in TEMPLATES_DEFAULT:
             templates[t] = TEMPLATES_DEFAULT[t]
 
-        for t in self.bot.memory['rss']['templates']['default']:
-            if self.is_template_valid(self.bot.memory['rss']['templates']['default'][t]):
-                templates[t] = self.bot.memory['rss']['templates']['default'][t]
+        for t in self.bot.memory['rss']['templates']:
+            if self.is_template_valid(self.bot.memory['rss']['templates'][t]):
+                templates[t] = self.bot.memory['rss']['templates'][t]
 
         post = ''
         for f in self.get_output():
@@ -1233,7 +1236,7 @@ class FeedFormater:
                 return hashed + self.separator + output
 
         # check in turn if each default format is valid
-        for format in self.bot.memory['rss']['formats']['default']:
+        for format in self.bot.memory['rss']['formats']:
             hashed, output, remainder = self._format_split(format, self.separator)
             if self._format_valid(hashed, output, remainder):
                 return hashed + self.separator + output
