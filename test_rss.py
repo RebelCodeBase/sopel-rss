@@ -224,14 +224,15 @@ def test_rss_global_fields_get(bot):
     expected = rss.MESSAGES['fields_of_feed_are'].format('feed1', 'fadglpsty') + '\n'
     assert expected == bot.output
 
+
 def test_rss_global_format_set(bot):
-    rss._rss(bot, ['format', 'feed1', 'f=asl+als'])
+    rss._rss(bot, ['formats', 'feed1', 'f=asl+als'])
     format_new = bot.memory['rss']['options']['feed1'].get_format()
     assert 'f=asl+als' == format_new
 
 
 def test_rss_global_format_feed(bot):
-    rss._rss(bot, ['format', 'feed1', 'f=apl+atl'])
+    rss._rss(bot, ['formats', 'feed1', 'f=apl+atl'])
     bot.output = ''
     args = ['config', 'feeds']
     rss._rss_config(bot, args)
@@ -283,7 +284,7 @@ def test_rss_add_feed_add(bot):
 
 def test_rss_config_feeds_list(bot):
     rss._rss_add(bot, ['add', '#channel2', 'feed2', FEED_VALID, 'f=p+tlpas'])
-    rss._rss_format(bot, ['format', 'feed1', 'f=asl+als'])
+    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
     bot.output = ''
     args = ['config', 'feeds']
     rss._rss_config(bot, args)
@@ -439,44 +440,44 @@ def test_rss_fields_get_custom(bot):
     assert expected == bot.output
 
 
-def test_rss_format_feed_nonexistent(bot):
-    rss._rss_format(bot, ['format', 'abcd'])
+def test_rss_formats_feed_nonexistent(bot):
+    rss._rss_formats(bot, ['format', 'abcd'])
     expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
     assert expected == bot.output
 
 
-def test_rss_format_feed_get(bot):
-    rss._rss_format(bot, ['format', 'feed1', 'f=yt+ytl'])
+def test_rss_formats_feed_get(bot):
+    rss._rss_formats(bot, ['format', 'feed1', 'f=yt+ytl'])
     bot.output = ''
-    rss._rss_format(bot, ['format', 'feed1'])
+    rss._rss_formats(bot, ['format', 'feed1'])
     expected = rss.MESSAGES['format_of_feed_is'].format('feed1', 'f=yt+ytl') + '\n'
     assert expected == bot.output
 
 
-def test_rss_format_format_unchanged(bot):
+def test_rss_formats_format_unchanged(bot):
     format_old = bot.memory['rss']['options']['feed1'].get_format()
-    rss._rss_format(bot, ['format', 'feed1', 'f=abcd+efgh'])
+    rss._rss_formats(bot, ['format', 'feed1', 'f=abcd+efgh'])
     format_new = bot.memory['rss']['options']['feed1'].get_format()
     assert format_old == format_new
     expected = rss.MESSAGES['consider_rss_fields'].format(bot.config.core.prefix, 'feed1') + '\n'
     assert expected == bot.output
 
 
-def test_rss_format_format_changed(bot):
+def test_rss_formats_format_changed(bot):
     format_old = bot.memory['rss']['options']['feed1'].get_format()
-    rss._rss_format(bot, ['format', 'feed1', 'f=asl+als'])
+    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
     format_new = bot.memory['rss']['options']['feed1'].get_format()
     assert format_old != format_new
 
 
-def test_rss_format_format_set(bot):
-    rss._rss_format(bot, ['format', 'feed1', 'f=asl+als'])
+def test_rss_formats_format_set(bot):
+    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
     format_new = bot.memory['rss']['options']['feed1'].get_format()
     assert 'f=asl+als' == format_new
 
 
-def test_rss_format_format_output(bot_rss_update):
-    rss._rss_format(bot_rss_update, ['format', 'feed1', 'f=fadglpst+fadglpst'])
+def test_rss_formats_format_output(bot_rss_update):
+    rss._rss_formats(bot_rss_update, ['format', 'feed1', 'f=fadglpst+fadglpst'])
     rss._rss_update(bot_rss_update, ['update'])
     expected = rss.MESSAGES['format_of_feed_has_been_set_to'].format('feed1', 'f=fadglpst+fadglpst') + '''
 \x02[feed1]\x02 <Author 1> Description of article 1 1 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article1 (2016-08-21 01:10) Description of article 1 Title 1
@@ -572,6 +573,11 @@ def test_rss_list_channel(bot):
 
 def test_rss_list_no_feed_found(bot):
     rss._rss_list(bot, ['list', 'invalid'])
+    assert '' == bot.output
+
+
+def test_rss_templates_get(bot):
+    rss._rss_templates(bot, ['templates', 'feed1'])
     assert '' == bot.output
 
 
@@ -1147,6 +1153,15 @@ def test_options_check_template_invalid_duplicate_curly_braces(bot):
     template = '{}{}'
     result = rss.Options(bot, rss.FeedReader('')).is_template_valid(template)
     assert False == result
+
+
+def test_options_set_get_templates(bot):
+    templates = 't=a' + rss.TEMPLATE_SEPARATOR + '((({})))'
+    templates += rss.CONFIG_SEPARATOR
+    templates += 't=s' + rss.TEMPLATE_SEPARATOR + '->{}<-'
+    bot.memory['rss']['options']['feed1'].set_templates(templates)
+    templates_after = bot.memory['rss']['options']['feed1'].get_templates()
+    assert templates == templates_after
 
 
 def test_ringbuffer_append():

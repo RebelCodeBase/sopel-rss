@@ -24,12 +24,6 @@ MAX_HASHES_PER_FEED = 300
 
 UPDATE_INTERVAL = 60 # seconds
 
-CONFIG_SEPARATOR = ';'
-
-FORMAT_DEFAULT = 'fl+ftl'
-
-FORMAT_SEPARATOR = '+'
-
 ESCAPE_CHARACTER = '%'
 
 ESCAPE_COLOR = '\x03'
@@ -58,6 +52,14 @@ ESCAPE_CODE = {
     '20': '\x0f', # reset formatting
 }
 
+CONFIG_SEPARATOR = ';'
+
+FORMAT_SEPARATOR = '+'
+
+FORMAT_DEFAULT = 'fl+ftl'
+
+TEMPLATE_SEPARATOR = '|'
+
 TEMPLATES_DEFAULT = {
     'f': ESCAPE_CHARACTER + '16[{}]' + ESCAPE_CHARACTER + '16',
     'a': '<{}>',
@@ -74,9 +76,8 @@ COMMANDS = {
     'add': {
         'synopsis': 'synopsis: {}rss add <channel> <name> <url> [<options>]',
         'helptext': ['add a feed identified by <name> with feed address <url> to irc channel <channel>. optional: add a format string.'],
-        'examples' : ['{}rss add #sopel-test guardian https://www.theguardian.com/world/rss',
-                      '{}rss add #sopel-test guardian https://www.theguardian.com/world/rss ' + 'f=' + FORMAT_DEFAULT,
-                      '{}rss add #sopel-test guardian https://www.theguardian.com/world/rss ' + 'f=' + FORMAT_DEFAULT + CONFIG_SEPARATOR + 't=t|«{}»'],
+        'examples': ['{}rss add #sopel-test guardian https://www.theguardian.com/world/rss',
+                     '{}rss add #sopel-test guardian https://www.theguardian.com/world/rss f=' + FORMAT_DEFAULT],
         'required': 3,
         'optional': 1,
         'function': '_rss_add'
@@ -107,19 +108,18 @@ COMMANDS = {
         'optional': 0,
         'function': '_rss_fields'
     },
-    'format': {
-        'synopsis': 'synopsis: {}rss format <name> [<format>]',
+    'formats': {
+        'synopsis': 'synopsis: {}rss format <name> [f=<format>]',
         'helptext': ['get the format string for the feed identified by <name>.',
                      'or set the format string for the feed identified by <name>.',
-                     'if <format> is omitted the default format "' + FORMAT_DEFAULT + '" will be used. if the default format is not valid for this feed a minimal format will be used.',
-                     'a format string is separated by the separator "' + FORMAT_SEPARATOR + '"',
+                     'a format string begins with "f=" and it is separated by the separator "' + FORMAT_SEPARATOR + '"',
                      'the left part of the format string indicates the fields that will be hashed for an item. if you change this part all feed items will be reposted.',
                      'the fields determine when a feed item will be reposted. if you see duplicates then first look at this part of the format string.',
                      'the right part of the format string determines which feed item fields will be posted.'],
-        'examples': ['{}rss format fl+ftl'],
+        'examples': ['{}rss formats f=fl+ftl'],
         'required': 1,
         'optional': 1,
-        'function': '_rss_format'
+        'function': '_rss_formats'
     },
     'get': {
         'synopsis': 'synopsis: {}rss get <name>',
@@ -154,6 +154,18 @@ COMMANDS = {
         'optional': 1,
         'function': '_rss_list'
     },
+    'templates': {
+        'synopsis': 'synopsis: {}rss templates <name> [t=<template>]',
+        'helptext': ['get the templates for the feed identified by <name>.',
+                     'or set the templates for the feed identified by <name>.',
+                     'a template is separated by the separator "' + CONFIG_SEPARATOR + '", multiple templates are separated by the separator "' + TEMPLATE_SEPARATOR + '"',
+                     'the left part of the template is the field for which the output will be overridden.',
+                     'the right part is the actual template string. Curly brackets {} will be replaced by the value of the field.'],
+        'examples': ['{}rss templates t=l' + TEMPLATE_SEPARATOR + '-> {}' + CONFIG_SEPARATOR + 't=y' + TEMPLATE_SEPARATOR + '-> {}'],
+        'required': 1,
+        'optional': 1,
+        'function': '_rss_templates'
+    },
     'update': {
         'synopsis': 'synopsis: {}rss update',
         'helptext': ['post the latest feed items of all feeds.'],
@@ -173,19 +185,19 @@ CONFIG = {
         'func_set': '_config_set_feeds'
     },
     'formats': {
-        'synopsis': 'formats = <format1>,<format2>,...',
+        'synopsis': 'formats = f=<format1>;f=<format2>,...',
         'helptext': ['if no format is defined for a feed the bot will try these formats and the global default format (' + FORMAT_DEFAULT + ') one by one until it finds a valid format.',
                      'a format is valid if the fields used in the format do exist in the feed items.'],
-        'examples': ['formats = l+fpatl, l+fptl'],
+        'examples': ['formats = f=l+fpatl' + CONFIG_SEPARATOR + 'f=l+fptl'],
         'func_get': '_config_get_formats',
         'func_set': '_config_set_formats'
     },
     'templates': {
-        'synopsis': 'templates = <field1>|<template1>,<field2>|<template2>,...',
+        'synopsis': 'templates = t=<field1>' + TEMPLATE_SEPARATOR + '<template1>' + CONFIG_SEPARATOR + 't=<field2>' + TEMPLATE_SEPARATOR + '<template2>,...',
         'helptext': ['for each rss feed item field a template can be defined which will be used to create the output string.',
-                     'each template must contain exactly one pair of curly braces which will be replaced by the field value.',
+                     'each template must contain exactly one pair of curly brackets which will be replaced by the field value.',
                      'the bot will use the global default template for those fields which no custom template is defined.'],
-        'examples': [''],
+        'examples': ['templates = t=t' + TEMPLATE_SEPARATOR + '«{}»'],
         'func_get': '_config_get_templates',
         'func_set': '_config_set_templates'
     },
@@ -240,6 +252,10 @@ MESSAGES = {
         'saved hash "{}" of feed "{}" to sqlite table "{}"',
     'synopsis_rss':
         'synopsis: {}rss {}',
+    'templates_of_feed_are':
+        'templates of feed "{}" are "{}"',
+    'templates_of_feed_have_been_set_to':
+        'templates of feed "{}" have been set to "{}"',
     'unable_to_read_feed':
         'unable to read feed',
     'unable_to_read_url_of_feed':
@@ -391,7 +407,7 @@ def _rss_fields(bot, args):
     bot.say(message)
 
 
-def _rss_format(bot, args):
+def _rss_formats(bot, args):
     feedname = args[1]
 
     if not _feed_exists(bot, feedname):
@@ -406,11 +422,14 @@ def _rss_format(bot, args):
         return
 
     format = args[2]
-    format_new = bot.memory['rss']['options'][feedname].set_format(format)
 
-    if format == format_new:
+    format_before = bot.memory['rss']['options'][feedname].get_format()
+    bot.memory['rss']['options'][feedname].set_format(format)
+    format_after = bot.memory['rss']['options'][feedname].get_format()
+
+    if not format_before == format_after:
         _config_save(bot)
-        message = MESSAGES['format_of_feed_has_been_set_to'].format(feedname, format_new)
+        message = MESSAGES['format_of_feed_has_been_set_to'].format(feedname, format_after)
         LOGGER.debug(message)
         bot.say(message)
         return
@@ -482,6 +501,34 @@ def _rss_list(bot, args):
         _feed_list(bot, feedname)
 
 
+def _rss_templates(bot, args):
+    feedname = args[1]
+
+    if not _feed_exists(bot, feedname):
+        message = MESSAGES['feed_does_not_exist'].format(feedname)
+        bot.say(message)
+        return
+
+    if len(args) == 2:
+        templates = bot.memory['rss']['options'][feedname].get_templates()
+        if templates:
+            message = MESSAGES['templates_of_feed_are'].format(feedname, templates)
+            bot.say(message)
+        return
+
+    templates = args[2]
+    templates_before = bot.memory['rss']['options'][feedname].get_templates()
+    bot.memory['rss']['options'][feedname].set_templates(templates)
+    templates_after = bot.memory['rss']['options'][feedname].get_templates()
+
+    if templates_before == templates_after:
+        _config_save(bot)
+        message = MESSAGES['templates_of_feed_have_been_set_to'].format(feedname, templates_after)
+        LOGGER.debug(message)
+        bot.say(message)
+        return
+
+
 @interval(UPDATE_INTERVAL)
 def _rss_update(bot, args=[]):
     for feedname in bot.memory['rss']['feeds']:
@@ -537,7 +584,7 @@ def _config_concatenate_templates(bot):
         #only save template that differ from the default
         if not TEMPLATES_DEFAULT[field] == template:
             templates.append('t=' + field + '|' + template)
-    templates.sort()
+    templates = sorted(templates)
     return [CONFIG_SEPARATOR.join(templates)]
 
 
@@ -582,7 +629,7 @@ def _config_get_templates(bot):
         if not template_string:
             template = TEMPLATES_DEFAULT[field]
         templates.append('t=' + field + '|' + template)
-    templates.sort()
+    templates = sorted(templates)
     bot.say(CONFIG_SEPARATOR.join(templates))
     bot.say(_config_templates_example(bot))
 
@@ -982,6 +1029,9 @@ class Options:
 
         self._options_parse(options)
 
+    def get_fields(self):
+        return self._format_get_fields(self.feedreader)
+
     def get_format_default(self):
         for format in self.bot.memory['rss']['formats']:
             return 'f=' + format
@@ -991,9 +1041,6 @@ class Options:
         if self.format:
             return 'f=' + self.format
         return self.get_format_default()
-
-    def get_fields(self):
-        return self._format_get_fields(self.feedreader)
 
     def get_hash(self, feedname, item):
         saneitem = dict()
@@ -1095,13 +1142,20 @@ class Options:
 
         return post[:-1]
 
+    def get_templates(self):
+        templates_list = list()
+        for f in sorted(self.templates):
+            templates_list.append('t=' + f + TEMPLATE_SEPARATOR + self.templates[f])
+        templates = CONFIG_SEPARATOR.join(templates_list)
+        return templates
+
     def is_format_valid(self, format, separator, fields = ''):
         hashed, output, remainder = self._format_split(format, separator)
         return(self._is_format_valid(hashed, output, remainder, fields))
 
     def is_template_valid(self, template):
 
-        # check if template contains exactly one pair of curly braces
+        # check if template contains exactly one pair of curly brackets
         if template.count('{}') != 1:
             return False
 
@@ -1117,13 +1171,29 @@ class Options:
             format_new = format_new[2:]
         format_sanitized = self._format_sanitize(format_new)
         if format_new and format_new != format_sanitized:
-            return self.format
+            return
         self.format = format_sanitized
-        return 'f=' + self.format
 
     def set_format_minimal(self):
         self.format = self.get_format_minimal()
-        return self.format
+
+    def set_templates(self, templates):
+        templates_split = templates.split(CONFIG_SEPARATOR)
+        for template in templates_split:
+            if not template.startswith('t='):
+                continue
+            template = template[2:]
+            templates_split = template.split(TEMPLATE_SEPARATOR)
+            if not len(templates_split) == 2:
+                continue
+            f = templates_split[0]
+            fields = self._format_get_fields(self.feedreader)
+            if not f in fields:
+                continue
+            t = templates_split[1]
+            if not self.is_template_valid(t):
+                continue
+            self.templates[f] = t
 
     def template_to_irc(self, template):
         irc = ''
