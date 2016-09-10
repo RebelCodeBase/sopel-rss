@@ -225,13 +225,13 @@ def test_rss_global_fields_get(bot):
     assert expected == bot.output
 
 
-def test_rss_global_format_set(bot):
+def test_rss_global_formats_set(bot):
     rss._rss(bot, ['formats', 'feed1', 'f=asl+als'])
     format_new = bot.memory['rss']['options']['feed1'].get_format()
     assert 'f=asl+als' == format_new
 
 
-def test_rss_global_format_feed(bot):
+def test_rss_global_formats_feed(bot):
     rss._rss(bot, ['formats', 'feed1', 'f=apl+atl'])
     bot.output = ''
     args = ['config', 'feeds']
@@ -269,6 +269,11 @@ def test_rss_global_list_feed(bot):
     rss._rss(bot, ['list', 'feed1'])
     expected = '#channel1 feed1 http://www.site1.com/feed f=fl+ftl\n'
     assert expected == bot.output
+
+
+def test_rss_global_templates_get(bot):
+    rss._rss(bot, ['templates', 'feed1'])
+    assert '' == bot.output
 
 
 def test_rss_global_update_update(bot_rss_update):
@@ -1038,6 +1043,29 @@ def test_rss_list_no_feed_found(bot):
 def test_rss_templates_get(bot):
     rss._rss_templates(bot, ['templates', 'feed1'])
     assert '' == bot.output
+
+
+def test_rss_templates_override(bot):
+    format_add = 'f=l+agpt'
+    templates_add = 't=t' + rss.TEMPLATE_SEPARATOR + 'addtitle:{}'
+    templates_add += rss.CONFIG_SEPARATOR
+    templates_add += 't=g' + rss.TEMPLATE_SEPARATOR + 'addguid:{}'
+    options = templates_add + rss.CONFIG_SEPARATOR + format_add
+    templates_feed = 't=t' + rss.TEMPLATE_SEPARATOR + 'feedtitle:{}'
+    templates_feed += rss.CONFIG_SEPARATOR
+    templates_feed += 't=a' + rss.TEMPLATE_SEPARATOR + 'feedauthor:{}'
+    templates_default = 't=t' + rss.TEMPLATE_SEPARATOR + 'defaulttitle:{}'
+    templates_default += rss.CONFIG_SEPARATOR
+    templates_default += 't=p' + rss.TEMPLATE_SEPARATOR + 'defaultpublished:{}'
+    templates_default += rss.CONFIG_SEPARATOR
+    templates_default += 't=g' + rss.TEMPLATE_SEPARATOR + 'defaultguid:{}'
+    rss._rss_add(bot, ['add', '#channel', 'feed', FEED_VALID, options])
+    rss._rss_templates(bot, ['templates', 'feed', templates_feed])
+    rss._rss_config(bot, ['config', 'templates', templates_default])
+    bot.output = ''
+    rss._rss_get(bot, ['get', 'feed'])
+    expected = 'feedauthor:Author 1 addguid:1 at http://www.site1.com/ defaultpublished:2016-08-21 01:10 feedtitle:Title 1\nfeedauthor:Author 2 addguid:2 at http://www.site1.com/ defaultpublished:2016-08-22 02:20 feedtitle:Title 2\nfeedauthor:Author 3 addguid:3 at http://www.site1.com/ defaultpublished:2016-08-23 03:30 feedtitle:Title 3\n'
+    assert expected == bot.output
 
 
 def test_rss_update_update(bot_rss_update):

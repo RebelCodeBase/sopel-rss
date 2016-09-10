@@ -473,12 +473,10 @@ def _config_split_feeds(bot, feeds):
     before = len(bot.memory['rss']['feeds'])
 
     for feed in feeds:
-        print('feed: ')
-        print(feed)
+
         # split feed by pipes
         atoms = feed.split(CONFIG_SEPARATOR)
-        print('atoms: ')
-        print(atoms)
+
         try:
             channel = atoms[0]
             feedname = atoms[1]
@@ -490,8 +488,7 @@ def _config_split_feeds(bot, feeds):
             options = CONFIG_SEPARATOR.join(atoms[3:])
         except IndexError:
             options = ''
-        print('options: ')
-        print(options)
+
         feedreader = FeedReader(url)
         if _feed_check(bot, feedreader, channel, feedname) == []:
             _feed_add(bot, channel, feedname, url, options)
@@ -818,9 +815,9 @@ def _rss_add(bot, args):
     channel = args[1]
     feedname = args[2]
     url = args[3]
-    format = ''
+    options = ''
     if len(args) == 5:
-        format = args[4]
+        options = args[4]
     feedreader = FeedReader(url)
     checkresults = _feed_check(bot, feedreader, channel, feedname)
     if checkresults:
@@ -828,7 +825,7 @@ def _rss_add(bot, args):
             LOGGER.debug(message)
             bot.say(message)
         return
-    message = _feed_add(bot, channel, feedname, url, format)
+    message = _feed_add(bot, channel, feedname, url, options)
     bot.say(message)
     bot.join(channel)
     _config_save(bot)
@@ -1429,11 +1426,7 @@ class Options:
                 self.set_format_minimal()
                 self.set_format(option)
             elif option.startswith('t='):
-                atoms = option.split('|')
-                if not len(atoms) == 2:
-                    continue
-                if self.is_template_valid(atoms[1]):
-                    self.templates[atoms[0]] = atoms[1]
+                self.set_templates(option)
 
     def _value_sanitize(self, key, item):
         if hasattr(item, key):
