@@ -724,6 +724,15 @@ def _feed_list(bot, feedname):
     bot.say('{} {} {} {}'.format(feed['channel'], feed['name'], feed['url'], format_feed))
 
 
+def _feed_templates_example(bot, feedname):
+    feedreader = MockFeedReader(FEED_EXAMPLE)
+    feedoptions = bot.memory['rss']['options'][feedname].get_options()
+    options = Options(bot, feedreader, feedoptions)
+    feed = feedreader.get_feed()
+    item = feed['entries'][0]
+    return options.get_post(feedname, item)
+
+
 def _feed_update(bot, feedreader, feedname, chatty):
     feed = feedreader.get_feed()
 
@@ -981,6 +990,8 @@ def _rss_templates(bot, args):
         if templates:
             message = MESSAGES['templates_of_feed_are'].format(feedname, templates)
             bot.say(message)
+            message = _feed_templates_example(bot, feedname)
+            bot.say(message)
         return
 
     templates = args[2]
@@ -988,12 +999,14 @@ def _rss_templates(bot, args):
     bot.memory['rss']['options'][feedname].set_templates(templates)
     templates_after = bot.memory['rss']['options'][feedname].get_templates()
 
-    if templates_before == templates_after:
+    if not templates_before == templates_after:
         _config_save(bot)
         message = MESSAGES['templates_of_feed_have_been_set_to'].format(feedname, templates_after)
         LOGGER.debug(message)
         bot.say(message)
-        return
+
+    message = _feed_templates_example(bot, feedname)
+    bot.say(message)
 
 
 @interval(UPDATE_INTERVAL)

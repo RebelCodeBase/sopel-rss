@@ -1045,6 +1045,22 @@ def test_rss_templates_get(bot):
     assert '' == bot.output
 
 
+def test_rss_templates_get(bot):
+    rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06[{}]%20'])
+    bot.output = ''
+    rss._rss_templates(bot, ['templates', 'feed1'])
+    print(repr(bot.output))
+    expected = 'templates of feed "feed1" are "t=f|%06[{}]%20"\n\x02[feed1]\x02 Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
+    assert expected == bot.output
+
+
+def test_rss_templates_set(bot):
+    rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06[{}]%20'])
+    print(repr(bot.output))
+    expected = 'templates of feed "feed1" have been set to "t=f|%06[{}]%20"\n\x02[feed1]\x02 Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
+    assert expected == bot.output
+
+
 def test_rss_templates_override(bot):
     format_add = 'f=l+agpt'
     templates_add = 't=t' + rss.TEMPLATE_SEPARATOR + 'addtitle:{}'
