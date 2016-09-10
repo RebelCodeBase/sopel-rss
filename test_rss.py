@@ -267,7 +267,17 @@ def test_rss_global_join(bot):
 
 def test_rss_global_list_feed(bot):
     rss._rss(bot, ['list', 'feed1'])
-    expected = '#channel1 feed1 http://www.site1.com/feed f=fl+ftl\n'
+    expected = '#channel1 feed1 http://www.site1.com/feed\n'
+    assert expected == bot.output
+
+
+def test_rss_global_list_feed_options(bot):
+    rss._rss(bot, ['add', '#channel', 'feed', FEED_VALID])
+    rss._rss(bot, ['formats', 'feed', 'f=l+tl'])
+    rss._rss(bot, ['templates', 'feed', 't=t|%06[{}]%20'])
+    bot.output = ''
+    rss._rss(bot, ['list', 'feed'])
+    expected = '#channel feed ' + FEED_VALID + ' f=l+tl;t=t|%06[{}]%20\n'
     assert expected == bot.output
 
 
@@ -1025,13 +1035,13 @@ def test_rss_list_all(bot_rss_list):
 
 def test_rss_list_feed(bot):
     rss._rss_list(bot, ['list', 'feed1'])
-    expected = '#channel1 feed1 http://www.site1.com/feed f=fl+ftl\n'
+    expected = '#channel1 feed1 http://www.site1.com/feed\n'
     assert expected == bot.output
 
 
 def test_rss_list_channel(bot):
     rss._rss_list(bot, ['list', '#channel1'])
-    expected = '#channel1 feed1 http://www.site1.com/feed f=fl+ftl\n'
+    expected = '#channel1 feed1 http://www.site1.com/feed\n'
     assert expected == bot.output
 
 
@@ -1046,18 +1056,16 @@ def test_rss_templates_get(bot):
 
 
 def test_rss_templates_get(bot):
-    rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06[{}]%20'])
+    rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06%16[{}]%20'])
     bot.output = ''
     rss._rss_templates(bot, ['templates', 'feed1'])
-    print(repr(bot.output))
-    expected = 'templates of feed "feed1" are "t=f|%06[{}]%20"\n\x02[feed1]\x02 Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
+    expected = 'templates of feed "feed1" are "t=f|%06%16[{}]%20"\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
     assert expected == bot.output
 
 
 def test_rss_templates_set(bot):
-    rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06[{}]%20'])
-    print(repr(bot.output))
-    expected = 'templates of feed "feed1" have been set to "t=f|%06[{}]%20"\n\x02[feed1]\x02 Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
+    rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06%16[{}]%20'])
+    expected = 'templates of feed "feed1" have been set to "t=f|%06%16[{}]%20"\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
     assert expected == bot.output
 
 

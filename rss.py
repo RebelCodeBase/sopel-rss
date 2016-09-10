@@ -720,8 +720,11 @@ def _feed_exists(bot, feedname):
 
 def _feed_list(bot, feedname):
     feed = bot.memory['rss']['feeds'][feedname]
-    format_feed = bot.memory['rss']['options'][feedname].get_format()
-    bot.say('{} {} {} {}'.format(feed['channel'], feed['name'], feed['url'], format_feed))
+    feed_options = bot.memory['rss']['options'][feedname].get_options()
+    if feed_options:
+        bot.say('{} {} {} {}'.format(feed['channel'], feed['name'], feed['url'], feed_options))
+    else:
+        bot.say('{} {} {}'.format(feed['channel'], feed['name'], feed['url']))
 
 
 def _feed_templates_example(bot, feedname):
@@ -998,7 +1001,6 @@ def _rss_templates(bot, args):
     templates_before = bot.memory['rss']['options'][feedname].get_templates()
     bot.memory['rss']['options'][feedname].set_templates(templates)
     templates_after = bot.memory['rss']['options'][feedname].get_templates()
-
     if not templates_before == templates_after:
         _config_save(bot)
         message = MESSAGES['templates_of_feed_have_been_set_to'].format(feedname, templates_after)
@@ -1095,7 +1097,9 @@ class Options:
         if self.format:
             options += 'f=' + self.format
         for t in self.templates:
-            options += CONFIG_SEPARATOR + 't=' + t
+            if options:
+                options += CONFIG_SEPARATOR
+            options += 't=' + t + TEMPLATE_SEPARATOR + self.templates[t]
         return options
 
     def get_output(self):
