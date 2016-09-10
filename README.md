@@ -42,9 +42,9 @@ Delete the feed called \<name\>.
 
 Get the item fields of the feed *\<name\>*. 
 
-### rss format &mdash; get or set the format of a feed
+### rss formats &mdash; get or set the format of a feed
 
-#### Synopsis: *.rss format \<name\> [\<format\>]*
+#### Synopsis: *.rss formats \<name\> [f=\<format\>]*
 
 Get the format of the feed *\<name\>*. Or set the format of the feed *\<name\>* to *\<format\>*. 
 
@@ -72,6 +72,12 @@ List properties of \<feed\> or list all feeds in \<channel\>.
 
 Every feed must have a channel associated to it and *.rss join* joins these channels. This command is only needed in case of problems as channels are automatically joind after adding a feed or restarting the bot.
  
+### rss templates &mdash; get or set the templates of a feed
+
+#### Synopsis: *.rss templates \<name\> [t=\<field1\>|\<template1\>;t=\<field1\>|\<template1\>;...]*
+
+Get the templates of the feed *\<name\>*. Or set templates of the feed *\<name\>*. 
+
 ### rss update &mdash; post new feed items
 
 #### Synopsis: *.rss update*
@@ -98,7 +104,7 @@ Semicolon separated list of default formats which will be used if the fields of 
 
 #### Synopsis: *.rss config templates t=\<field1\>|\<template1\>;t=\<field2\>|\<template2\>...*
 
-Semicolon separated list of template strings which will override the default template strings. Curly braces will be replaced by the actual string. In the template strings the field and template are separated by a pipe.
+Semicolon separated list of template strings which will override the default template strings. Curly brackets will be replaced by the actual string. In the template strings the field and template are separated by a pipe.
 
 ## Formats
 
@@ -128,7 +134,7 @@ The feedname, link, summary and title will be used to hash the feed item. If any
 
 ## Templates
 
-Template strings define how the different fields of a feed item will be posted to the irc channel. You may override some or all of the default template strings. Curly braces {} will be replaced by the field value. These are the default templates:
+Template strings define how the different fields of a feed item will be posted to the irc channel. You may override some or all of the default template strings. Curly brackets {} will be replaced by the field value. These are the default templates:
 
 
 |field|template  |
