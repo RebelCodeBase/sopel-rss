@@ -20,9 +20,9 @@ All commands require owner or admin privileges.
 
 ### rss add &mdash; add a feed
 
-#### Synopsis: *.rss add \<channel\> \<name\> \<url\> [\<format\>]*
+#### Synopsis: *.rss add \<channel\> \<name\> \<url\> [\<options\>]*
 
-Add the feed *\<url\>* to *\<channel\>* and call it *\<name\>*. Optionally, a format can be specified, see section Format. The feed will be read approximately every minute and new items will be automatically posted to *\<channel\>*.
+Add the feed *\<url\>* to *\<channel\>* and call it *\<name\>*. Options may be specified, see Formats and Templates. The feed will be read approximately every minute and new items will be automatically posted to *\<channel\>*.
 
 ### rss config &mdash; get or set configuration values
 
@@ -84,21 +84,21 @@ The following options can be set in the configuration file or via *.rss config \
 
 ### feeds &mdash; *which* feeds will be posted *where*
 
-#### Synopsis: *.rss config feeds \<channel1\>|\<name1\>|\<url1\>|[\<format1\>],\<channel2\>|\<name2\>|\<url2\>|[\<format2\>]...*
+#### Synopsis: *.rss config feeds \<channel1\>;\<name1\>;\<url1\>[\;<options1\>],\<channel2\>;\<name2\>;\<url2\>[\;<options2\>]...*
 
-Comma separated list of feed definitions with channel, feedname, url and optionally format separated by pipes.
+Comma separated list of feed definitions with channel, feedname, url and optionally format separated by semicolons.
 
 ### formats &mdash; *what* fields of the feed items will be posted
 
-#### Synopsis: *.rss config formats \<format1\>,\<format2\>,...*
+#### Synopsis: *.rss config formats f=\<format1\>;f=\<format2\>,...*
 
-Comma separated list of default formats which will be used if the fields of the feed fit the format.
+Semicolon separated list of default formats which will be used if the fields of the feed fit the format.
 
 ### templates &mdash; *how* the feed items will be posted
 
-#### Synopsis: *.rss config templates \<field1\>|\<template1\>,\<field2\>|\<template2\>...*
+#### Synopsis: *.rss config templates t=\<field1\>|\<template1\>;t=\<field2\>|\<template2\>...*
 
-Comma separated list of template strings which will override the default template strings. Curly braces will be replaced by the actual string. In the template strings the field and template are separated by a pipe.
+Semicolon separated list of template strings which will override the default template strings. Curly braces will be replaced by the actual string. In the template strings the field and template are separated by a pipe.
 
 ## Formats
 
@@ -116,13 +116,13 @@ A *format* string defines which feed item fields be be hashed, i.e. when two fee
 |t    |title      |
 |y    |tinyurl    |
 
-The feedname is a custom name specified as a parameter to *.rss add* an not a feed item field. guid is a unique identifiert and published is the date and time of publication. tinyurl will work like the field link but it will shorten the url through [tinyurl](https://www.tinyurl.com/) first.
+The field f references the feedname and is not a feed item field, guid is a unique identifiert and published is the date and time of publication. tinyurl will work like the field link but it will shorten the url through [tinyurl](https://www.tinyurl.com/) first.
 
-#### Example: *.rss config formats fl+tl*
+#### Example: *.rss config formats f=fl+tl*
 
 The feedname and the link of the rss feed item will be used to hash the feed item. If an item of a different feed has the same link it will be posted again by the bot. The bot will post the feed item title followed by the feed item link.
 
-#### Example: *.rss config formats flst+tal*
+#### Example: *.rss config formats f=flst+tal*
 
 The feedname, link, summary and title will be used to hash the feed item. If any of these fields change in the feed the feed item will be posted again. The bot will post the title, author and link of the feed item but not the feedname.
 
@@ -143,7 +143,7 @@ Template strings define how the different fields of a feed item will be posted t
 |t    |{}        |
 |y    |%16→%20 {}|
 
-You can use nearly any character you like but the percent sign % has a special meaning: it is the escape sign. If you want the bot to print a percent sign then you have to specify it twice: if the title of an item is "itemtitle" then *t|%%{}* will output "%itemtitle". The same is true for a comma after an escape sequence: if the title of an item is "itemtitle" then *t|%17%,{}%20* will output ",itemtitle" in italics.
+You can use nearly any character you like but the percent sign % has a special meaning: it is the escape sign. If you want the bot to print a percent sign then you have to specify it twice: if the title of an item is "itemtitle" then *t=t|%%{}* will output "%itemtitle". The same is true for a comma after an escape sequence: if the title of an item is "itemtitle" then *t=t|%17%,{}%20* will output ",itemtitle" in italics.
 
 To print colors you have to use the percent sign the color code of a foreground color. Optionally you can add a dollar sign the color code of a background color. Here is a list of all valid color and other formatting codes:
 
@@ -173,23 +173,23 @@ To print colors you have to use the percent sign the color code of a foreground 
 
 The command *.rss config templates* will show you the current template strings and a matching example output. This is the output of *.rss config templates* for the default template string (i.e. the value of *templates* in the config file is empty):
 
-a|<{}>,d|{},f|%16[{}]%16,g|{},l|%16→%16 {},p|({}),s|{},t|{},y|%16→%16 {}
+t=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};t=p|({});t=s|{};t=t|{};t=y|%16→%16 {}
 
 <Author> Description **[Feedname]** http://www.example.com/GUID **→** https://github.com/RebelCodeBase/sopel-rss (2016-09-03 10:00) Description Title **→** https://tinyurl.com/govvpmm
 
-#### Example: *.rss config templates t|%18%17{}%17%18*
+#### Example: *.rss config templates t=t|%18%17{}%17%18*
 
 Underline the title and print it in italics.
 
-#### Example: *.rss config templates p|%09({})%20*
+#### Example: *.rss config templates t=p|%09({})%20*
 
 Print the time in parentheses and in bright green. Stop the formatting afterwards so that the following fields are not affected by the color change.
 
-#### Example: *.rss config templates "l| → {}"*
+#### Example: *.rss config templates "t=l| → {}"*
 
 Include spaces in a template by using quotes.
 
-#### Example: *.rss config templates f|%13$15%16[{}]%16*
+#### Example: *.rss config templates t=f|%13$15%16[{}]%16*
 
 Print the feedname in pink on silver in bold. The %16 will stop the bold formatting but as there is no %20 to reset formatting, everything after the field f (depending on the format) will be printed in pink on silver as well.
 
