@@ -298,15 +298,6 @@ def configure(config):
     config.rss.configure_setting('templates', 'comma separated strings consisting format field and template string separated by pipes'.format(FORMAT_SEPARATOR))
 
 
-def setup(bot):
-    bot = _config_define(bot)
-    _config_read(bot)
-
-
-def shutdown(bot):
-    _config_save(bot)
-
-
 @require_admin
 @commands('rss')
 def rss(bot, trigger):
@@ -316,230 +307,13 @@ def rss(bot, trigger):
     _rss(bot, args)
 
 
-def _rss(bot, args):
-    args_count = len(args)
-
-    # check if we have a valid command or output general synopsis
-    if  args_count == 0 or args[0] not in COMMANDS.keys():
-        message = MESSAGES['synopsis_rss'].format(
-            bot.config.core.prefix, '|'.join(sorted(COMMANDS.keys())))
-        bot.say(message)
-        return
-
-    cmd = args[0]
-
-    # check if the number of arguments is valid
-    present = args_count-1
-    required = COMMANDS[cmd]['required']
-    optional = COMMANDS[cmd]['optional']
-    if present < required or present > required + optional:
-        bot.say(COMMANDS[cmd]['synopsis'].format(bot.config.core.prefix))
-        return
-
-    if args_count > 5:
-        globals()[COMMANDS['help']['function']](bot, ['help', args[0]])
-        return
-
-    # call command function
-    globals()[COMMANDS[cmd]['function']](bot, args)
+def setup(bot):
+    bot = _config_define(bot)
+    _config_read(bot)
 
 
-def _rss_add(bot, args):
-    channel = args[1]
-    feedname = args[2]
-    url = args[3]
-    format = ''
-    if len(args) == 5:
-        format = args[4]
-    feedreader = FeedReader(url)
-    checkresults = _feed_check(bot, feedreader, channel, feedname)
-    if checkresults:
-        for message in checkresults:
-            LOGGER.debug(message)
-            bot.say(message)
-        return
-    message = _feed_add(bot, channel, feedname, url, format)
-    bot.say(message)
-    bot.join(channel)
+def shutdown(bot):
     _config_save(bot)
-
-
-def _rss_config(bot, args):
-    key = args[1]
-    if key not in CONFIG:
-        return
-
-    value = ''
-    if len(args) == 3:
-        value = args[2]
-
-    if not value:
-        # call get function
-        globals()[CONFIG[key]['func_get']](bot)
-        return
-
-    # call set function
-    if globals()[CONFIG[key]['func_set']](bot, value):
-        _config_save(bot)
-
-
-def _rss_del(bot, args):
-    feedname = args[1]
-    if not _feed_exists(bot, feedname):
-        message = MESSAGES['feed_does_not_exist'].format(feedname)
-        bot.say(message)
-        return
-
-    message = _feed_delete(bot, feedname)
-    bot.say(message)
-    _config_save(bot)
-
-
-def _rss_fields(bot, args):
-    feedname = args[1]
-    if not _feed_exists(bot, feedname):
-        message = MESSAGES['feed_does_not_exist'].format(feedname)
-        bot.say(message)
-        return
-
-    fields = bot.memory['rss']['options'][feedname].get_fields()
-    message = MESSAGES['fields_of_feed_are'].format(feedname, fields)
-    bot.say(message)
-
-
-def _rss_formats(bot, args):
-    feedname = args[1]
-
-    if not _feed_exists(bot, feedname):
-        message = MESSAGES['feed_does_not_exist'].format(feedname)
-        bot.say(message)
-        return
-
-    if len(args) == 2:
-        format = bot.memory['rss']['options'][feedname].get_format()
-        message = MESSAGES['format_of_feed_is'].format(feedname, format)
-        bot.say(message)
-        return
-
-    format = args[2]
-
-    format_before = bot.memory['rss']['options'][feedname].get_format()
-    bot.memory['rss']['options'][feedname].set_format(format)
-    format_after = bot.memory['rss']['options'][feedname].get_format()
-
-    if not format_before == format_after:
-        _config_save(bot)
-        message = MESSAGES['format_of_feed_has_been_set_to'].format(feedname, format_after)
-        LOGGER.debug(message)
-        bot.say(message)
-        return
-
-    message = MESSAGES['consider_rss_fields'].format(bot.config.core.prefix, feedname)
-    bot.say(message)
-
-
-def _rss_get(bot, args):
-    feedname = args[1]
-
-    if not _feed_exists(bot, feedname):
-        message = 'feed "{}" doesn\'t exist!'.format(feedname)
-        LOGGER.debug(message)
-        bot.say(message)
-        return
-
-    url = bot.memory['rss']['feeds'][feedname]['url']
-    feedreader = FeedReader(url)
-    _feed_update(bot, feedreader, feedname, True)
-
-
-def _rss_help(bot, args):
-    args_count = len(args)
-
-    # check if we have a valid command or output general synopsis
-    if  args_count == 1 or args[0] not in COMMANDS.keys():
-        message = COMMANDS[args[0]]['synopsis'].format(bot.config.core.prefix)
-        bot.say(message)
-        if args_count == 1:
-            message = MESSAGES['command_is_one_of'].format('|'.join(sorted(COMMANDS.keys())))
-            bot.say(message)
-        return
-
-    # get the command
-    cmd = args[1]
-
-    # in case of 'config' we may have to output detailed help on config keys
-    if cmd == 'config':
-        _help_config(bot, args)
-        return
-
-    # output help texts on commands
-    _help_text(bot, COMMANDS, cmd)
-
-
-def _rss_join(bot, args):
-    for feedname, feed in bot.memory['rss']['feeds'].items():
-        bot.join(feed['channel'])
-    if bot.config.core.logging_channel:
-        bot.join(bot.config.core.logging_channel)
-
-
-def _rss_list(bot, args):
-
-    arg = ''
-    if len(args) == 2:
-        arg = args[1]
-
-    # list feed
-    if arg and _feed_exists(bot, arg):
-        _feed_list(bot, arg)
-        return
-
-    # list feeds in channel
-    for feedname, feed in bot.memory['rss']['feeds'].items():
-        if arg and arg != feed['channel']:
-            continue
-        _feed_list(bot, feedname)
-
-
-def _rss_templates(bot, args):
-    feedname = args[1]
-
-    if not _feed_exists(bot, feedname):
-        message = MESSAGES['feed_does_not_exist'].format(feedname)
-        bot.say(message)
-        return
-
-    if len(args) == 2:
-        templates = bot.memory['rss']['options'][feedname].get_templates()
-        if templates:
-            message = MESSAGES['templates_of_feed_are'].format(feedname, templates)
-            bot.say(message)
-        return
-
-    templates = args[2]
-    templates_before = bot.memory['rss']['options'][feedname].get_templates()
-    bot.memory['rss']['options'][feedname].set_templates(templates)
-    templates_after = bot.memory['rss']['options'][feedname].get_templates()
-
-    if templates_before == templates_after:
-        _config_save(bot)
-        message = MESSAGES['templates_of_feed_have_been_set_to'].format(feedname, templates_after)
-        LOGGER.debug(message)
-        bot.say(message)
-        return
-
-
-@interval(UPDATE_INTERVAL)
-def _rss_update(bot, args=[]):
-    for feedname in bot.memory['rss']['feeds']:
-
-        # the conditional check is necessary to avoid
-        # "RuntimeError: dictionary changed size during iteration"
-        # which occurs if a feed has been deleted in the meantime
-        if _feed_exists(bot, feedname):
-            url = bot.memory['rss']['feeds'][feedname]['url']
-            feedreader = FeedReader(url)
-            _feed_update(bot, feedreader, feedname, False)
 
 
 def _config_concatenate_channels(bot):
@@ -1010,6 +784,232 @@ def _help_text(bot, type, cmd):
     bot.say(message)
     for message in type[cmd]['examples']:
         bot.say(message.format(bot.config.core.prefix))
+
+
+def _rss(bot, args):
+    args_count = len(args)
+
+    # check if we have a valid command or output general synopsis
+    if  args_count == 0 or args[0] not in COMMANDS.keys():
+        message = MESSAGES['synopsis_rss'].format(
+            bot.config.core.prefix, '|'.join(sorted(COMMANDS.keys())))
+        bot.say(message)
+        return
+
+    cmd = args[0]
+
+    # check if the number of arguments is valid
+    present = args_count-1
+    required = COMMANDS[cmd]['required']
+    optional = COMMANDS[cmd]['optional']
+    if present < required or present > required + optional:
+        bot.say(COMMANDS[cmd]['synopsis'].format(bot.config.core.prefix))
+        return
+
+    if args_count > 5:
+        globals()[COMMANDS['help']['function']](bot, ['help', args[0]])
+        return
+
+    # call command function
+    globals()[COMMANDS[cmd]['function']](bot, args)
+
+
+def _rss_add(bot, args):
+    channel = args[1]
+    feedname = args[2]
+    url = args[3]
+    format = ''
+    if len(args) == 5:
+        format = args[4]
+    feedreader = FeedReader(url)
+    checkresults = _feed_check(bot, feedreader, channel, feedname)
+    if checkresults:
+        for message in checkresults:
+            LOGGER.debug(message)
+            bot.say(message)
+        return
+    message = _feed_add(bot, channel, feedname, url, format)
+    bot.say(message)
+    bot.join(channel)
+    _config_save(bot)
+
+
+def _rss_config(bot, args):
+    key = args[1]
+    if key not in CONFIG:
+        return
+
+    value = ''
+    if len(args) == 3:
+        value = args[2]
+
+    if not value:
+        # call get function
+        globals()[CONFIG[key]['func_get']](bot)
+        return
+
+    # call set function
+    if globals()[CONFIG[key]['func_set']](bot, value):
+        _config_save(bot)
+
+
+def _rss_del(bot, args):
+    feedname = args[1]
+    if not _feed_exists(bot, feedname):
+        message = MESSAGES['feed_does_not_exist'].format(feedname)
+        bot.say(message)
+        return
+
+    message = _feed_delete(bot, feedname)
+    bot.say(message)
+    _config_save(bot)
+
+
+def _rss_fields(bot, args):
+    feedname = args[1]
+    if not _feed_exists(bot, feedname):
+        message = MESSAGES['feed_does_not_exist'].format(feedname)
+        bot.say(message)
+        return
+
+    fields = bot.memory['rss']['options'][feedname].get_fields()
+    message = MESSAGES['fields_of_feed_are'].format(feedname, fields)
+    bot.say(message)
+
+
+def _rss_formats(bot, args):
+    feedname = args[1]
+
+    if not _feed_exists(bot, feedname):
+        message = MESSAGES['feed_does_not_exist'].format(feedname)
+        bot.say(message)
+        return
+
+    if len(args) == 2:
+        format = bot.memory['rss']['options'][feedname].get_format()
+        message = MESSAGES['format_of_feed_is'].format(feedname, format)
+        bot.say(message)
+        return
+
+    format = args[2]
+
+    format_before = bot.memory['rss']['options'][feedname].get_format()
+    bot.memory['rss']['options'][feedname].set_format(format)
+    format_after = bot.memory['rss']['options'][feedname].get_format()
+
+    if not format_before == format_after:
+        _config_save(bot)
+        message = MESSAGES['format_of_feed_has_been_set_to'].format(feedname, format_after)
+        LOGGER.debug(message)
+        bot.say(message)
+        return
+
+    message = MESSAGES['consider_rss_fields'].format(bot.config.core.prefix, feedname)
+    bot.say(message)
+
+
+def _rss_get(bot, args):
+    feedname = args[1]
+
+    if not _feed_exists(bot, feedname):
+        message = 'feed "{}" doesn\'t exist!'.format(feedname)
+        LOGGER.debug(message)
+        bot.say(message)
+        return
+
+    url = bot.memory['rss']['feeds'][feedname]['url']
+    feedreader = FeedReader(url)
+    _feed_update(bot, feedreader, feedname, True)
+
+
+def _rss_help(bot, args):
+    args_count = len(args)
+
+    # check if we have a valid command or output general synopsis
+    if  args_count == 1 or args[0] not in COMMANDS.keys():
+        message = COMMANDS[args[0]]['synopsis'].format(bot.config.core.prefix)
+        bot.say(message)
+        if args_count == 1:
+            message = MESSAGES['command_is_one_of'].format('|'.join(sorted(COMMANDS.keys())))
+            bot.say(message)
+        return
+
+    # get the command
+    cmd = args[1]
+
+    # in case of 'config' we may have to output detailed help on config keys
+    if cmd == 'config':
+        _help_config(bot, args)
+        return
+
+    # output help texts on commands
+    _help_text(bot, COMMANDS, cmd)
+
+
+def _rss_join(bot, args):
+    for feedname, feed in bot.memory['rss']['feeds'].items():
+        bot.join(feed['channel'])
+    if bot.config.core.logging_channel:
+        bot.join(bot.config.core.logging_channel)
+
+
+def _rss_list(bot, args):
+
+    arg = ''
+    if len(args) == 2:
+        arg = args[1]
+
+    # list feed
+    if arg and _feed_exists(bot, arg):
+        _feed_list(bot, arg)
+        return
+
+    # list feeds in channel
+    for feedname, feed in bot.memory['rss']['feeds'].items():
+        if arg and arg != feed['channel']:
+            continue
+        _feed_list(bot, feedname)
+
+
+def _rss_templates(bot, args):
+    feedname = args[1]
+
+    if not _feed_exists(bot, feedname):
+        message = MESSAGES['feed_does_not_exist'].format(feedname)
+        bot.say(message)
+        return
+
+    if len(args) == 2:
+        templates = bot.memory['rss']['options'][feedname].get_templates()
+        if templates:
+            message = MESSAGES['templates_of_feed_are'].format(feedname, templates)
+            bot.say(message)
+        return
+
+    templates = args[2]
+    templates_before = bot.memory['rss']['options'][feedname].get_templates()
+    bot.memory['rss']['options'][feedname].set_templates(templates)
+    templates_after = bot.memory['rss']['options'][feedname].get_templates()
+
+    if templates_before == templates_after:
+        _config_save(bot)
+        message = MESSAGES['templates_of_feed_have_been_set_to'].format(feedname, templates_after)
+        LOGGER.debug(message)
+        bot.say(message)
+        return
+
+
+@interval(UPDATE_INTERVAL)
+def _rss_update(bot, args=[]):
+    for feedname in bot.memory['rss']['feeds']:
+
+        # the conditional check is necessary to avoid
+        # "RuntimeError: dictionary changed size during iteration"
+        # which occurs if a feed has been deleted in the meantime
+        if _feed_exists(bot, feedname):
+            url = bot.memory['rss']['feeds'][feedname]['url']
+            feedreader = FeedReader(url)
+            _feed_update(bot, feedreader, feedname, False)
 
 
 # Implementing an rss format handler

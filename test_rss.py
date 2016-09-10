@@ -277,323 +277,6 @@ def test_rss_global_update_update(bot_rss_update):
     assert expected == bot_rss_update.output
 
 
-def test_rss_add_feed_add(bot):
-    rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID])
-    assert rss._feed_exists(bot, 'feedname') == True
-
-
-def test_rss_config_feeds_list(bot):
-    rss._rss_add(bot, ['add', '#channel2', 'feed2', FEED_VALID, 'f=p+tlpas'])
-    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
-    bot.output = ''
-    args = ['config', 'feeds']
-    rss._rss_config(bot, args)
-    expected = '#channel1' + rss.CONFIG_SEPARATOR + 'feed1' + rss.CONFIG_SEPARATOR + 'http://www.site1.com/feed' + rss.CONFIG_SEPARATOR + 'f=asl+als,#channel2' + rss.CONFIG_SEPARATOR + 'feed2' + rss.CONFIG_SEPARATOR + FEED_VALID + rss.CONFIG_SEPARATOR + 'f=p+tlpas\n'
-    assert expected == bot.output
-
-
-def test_rss_config_formats_default(bot):
-    rss._rss_config(bot, ['config', 'formats'])
-    expected = 'f=' + rss.FORMAT_DEFAULT + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_formats_list(bot):
-    bot.memory['rss']['formats'] = ['lts+flts','at+at']
-    args = ['config', 'formats']
-    rss._rss_config(bot, args)
-    expected = 'f=lts+flts;f=at+at;f=fl+ftl' + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_formats_output(bot):
-    rss._rss_config(bot, ['config', 'formats', 'f=t+t'])
-    rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID])
-    bot.output = ''
-    rss._rss_get(bot, ['get', 'feedname'])
-    expected = 'Title 1\nTitle 2\nTitle 3\n'
-    assert expected == bot.output
-
-
-def test_rss_config_templates_list(bot):
-    bot.memory['rss']['templates']['t'] = '†{}†'
-    args = ['config', 'templates']
-    rss._rss_config(bot, args)
-    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
-    expected += 't=p|({});t=s|{};t=t|†{}†;t=y|%16→%16 {}\n'
-    expected += rss._config_templates_example(bot) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_templates_invalid_escape_sequence(bot):
-    template = rss.ESCAPE_CHARACTER + '22{}' + rss.ESCAPE_CHARACTER + '20'
-    bot.memory['rss']['templates']['d'] = template
-    args = ['config', 'templates']
-    rss._rss_config(bot, args)
-    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
-    expected += 't=p|({});t=s|{};t=t|{};t=y|%16→%16 {}\n'
-    expected += rss._config_templates_example(bot) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_templates_invalid_backgroundcolor(bot):
-    template = rss.ESCAPE_CHARACTER + '04$20{}' + rss.ESCAPE_CHARACTER + '20'
-    bot.memory['rss']['templates']['d'] = template
-    args = ['config', 'templates']
-    rss._rss_config(bot, args)
-    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
-    expected += 't=p|({});t=s|{};t=t|{};t=y|%16→%16 {}\n'
-    expected += rss._config_templates_example(bot) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_templates_light_green_foreground(bot):
-    template = rss.ESCAPE_CHARACTER + '09{}' + rss.ESCAPE_CHARACTER + '20'
-    bot.memory['rss']['templates']['d'] = template
-    args = ['config', 'templates']
-    rss._rss_config(bot, args)
-    expected = 't=a|<{}>;t=d|%09{}%20;t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
-    expected += 't=p|({});t=s|{};t=t|{};t=y|%16→%16 {}\n'
-    expected += rss._config_templates_example(bot) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_templates_pink_on_silver(bot):
-    template = rss.ESCAPE_CHARACTER + '13$15{}' + rss.ESCAPE_CHARACTER + '20'
-    bot.memory['rss']['templates']['d'] = template
-    args = ['config', 'templates']
-    rss._rss_config(bot, args)
-    expected = 't=a|<{}>;t=d|%13$15{}%20;t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
-    expected += 't=p|({});t=s|{};t=t|{};t=y|%16→%16 {}\n'
-    expected += rss._config_templates_example(bot) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_templates_output_escape_character(bot):
-    template = rss.ESCAPE_CHARACTER + rss.ESCAPE_CHARACTER + '{}'
-    bot.memory['rss']['templates']['s'] = template
-    args = ['config', 'templates']
-    rss._rss_config(bot, args)
-    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
-    expected += 't=p|({});t=s|%%{};t=t|{};t=y|%16→%16 {}\n'
-    expected += rss._config_templates_example(bot) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_templates_output_dollar(bot):
-    template = rss.ESCAPE_CHARACTER + '${}'
-    bot.memory['rss']['templates']['s'] = template
-    args = ['config', 'templates']
-    rss._rss_config(bot, args)
-    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
-    expected += 't=p|({});t=s|%${};t=t|{};t=y|%16→%16 {}\n'
-    expected += rss._config_templates_example(bot) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_templates_output_dollar_after_control_sequence(bot):
-    template = rss.ESCAPE_CHARACTER + '17' + rss.ESCAPE_CHARACTER + '${}%16'
-    bot.memory['rss']['templates']['s'] = template
-    args = ['config', 'templates']
-    rss._rss_config(bot, args)
-    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
-    expected += 't=p|({});t=s|%17%${}%16;t=t|{};t=y|%16→%16 {}\n'
-    expected += rss._config_templates_example(bot) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_config_invalid_key(bot):
-    rss._rss_config(bot, ['config', 'invalidkey'])
-    expected = ''
-    assert expected == bot.output
-
-
-def test_rss_del_feed_nonexistent(bot):
-    rss._rss_del(bot, ['del', 'abcd'])
-    expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
-    assert expected == bot.output
-
-
-def test_rss_del_feed_delete(bot):
-    rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID])
-    rss._rss_del(bot, ['del', 'feedname'])
-    assert rss._feed_exists(bot, 'feedname') == False
-
-
-def test_rss_fields_feed_nonexistent(bot):
-    rss._rss_fields(bot, ['fields', 'abcd'])
-    expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
-    assert expected == bot.output
-
-
-def test_rss_fields_get_default(bot):
-    rss._rss_fields(bot, ['fields', 'feed1'])
-    expected = rss.MESSAGES['fields_of_feed_are'].format('feed1', 'fadglpsty') + '\n'
-    assert expected == bot.output
-
-
-def test_rss_fields_get_custom(bot):
-    rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID, 'f=fltp+atl'])
-    bot.output = ''
-    rss._rss_fields(bot, ['fields', 'feedname'])
-    expected = rss.MESSAGES['fields_of_feed_are'].format('feedname', 'fadglpsty') + '\n'
-    assert expected == bot.output
-
-
-def test_rss_formats_feed_nonexistent(bot):
-    rss._rss_formats(bot, ['format', 'abcd'])
-    expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
-    assert expected == bot.output
-
-
-def test_rss_formats_feed_get(bot):
-    rss._rss_formats(bot, ['format', 'feed1', 'f=yt+ytl'])
-    bot.output = ''
-    rss._rss_formats(bot, ['format', 'feed1'])
-    expected = rss.MESSAGES['format_of_feed_is'].format('feed1', 'f=yt+ytl') + '\n'
-    assert expected == bot.output
-
-
-def test_rss_formats_format_unchanged(bot):
-    format_old = bot.memory['rss']['options']['feed1'].get_format()
-    rss._rss_formats(bot, ['format', 'feed1', 'f=abcd+efgh'])
-    format_new = bot.memory['rss']['options']['feed1'].get_format()
-    assert format_old == format_new
-    expected = rss.MESSAGES['consider_rss_fields'].format(bot.config.core.prefix, 'feed1') + '\n'
-    assert expected == bot.output
-
-
-def test_rss_formats_format_changed(bot):
-    format_old = bot.memory['rss']['options']['feed1'].get_format()
-    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
-    format_new = bot.memory['rss']['options']['feed1'].get_format()
-    assert format_old != format_new
-
-
-def test_rss_formats_format_set(bot):
-    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
-    format_new = bot.memory['rss']['options']['feed1'].get_format()
-    assert 'f=asl+als' == format_new
-
-
-def test_rss_formats_format_output(bot_rss_update):
-    rss._rss_formats(bot_rss_update, ['format', 'feed1', 'f=fadglpst+fadglpst'])
-    rss._rss_update(bot_rss_update, ['update'])
-    expected = rss.MESSAGES['format_of_feed_has_been_set_to'].format('feed1', 'f=fadglpst+fadglpst') + '''
-\x02[feed1]\x02 <Author 1> Description of article 1 1 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article1 (2016-08-21 01:10) Description of article 1 Title 1
-\x02[feed1]\x02 <Author 2> Description of article 2 2 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article2 (2016-08-22 02:20) Description of article 2 Title 2
-\x02[feed1]\x02 <Author 3> Description of article 3 3 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article3 (2016-08-23 03:30) Description of article 3 Title 3
-'''
-    assert expected == bot_rss_update.output
-
-
-def test_rss_get_feed_nonexistent(bot):
-    rss._rss_get(bot, ['get', 'abcd'])
-    expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
-    assert expected == bot.output
-
-
-def test_rss_get_post_feed_items(bot):
-    rss._feed_add(bot, '#channel', 'feedname', FEED_VALID)
-    rss._rss_get(bot, ['get', 'feedname'])
-    expected = '\x02[feedname]\x02 Title 1 \x02→\x02 http://www.site1.com/article1\n\x02[feedname]\x02 Title 2 \x02→\x02 http://www.site1.com/article2\n\x02[feedname]\x02 Title 3 \x02→\x02 http://www.site1.com/article3\n'
-    assert expected == bot.output
-
-
-def test_rss_help_synopsis_help(bot):
-    rss._rss_help(bot, ['help'])
-    expected = rss.COMMANDS['help']['synopsis'].format(bot.config.core.prefix) + '\n'
-    expected += rss.MESSAGES['command_is_one_of'].format('|'.join(sorted(rss.COMMANDS.keys()))) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_help_add(bot):
-    rss._rss_help(bot, ['help', 'add'])
-    expected = rss.COMMANDS['add']['synopsis'].format(bot.config.core.prefix) + '\n'
-    for message in rss.COMMANDS['add']['helptext']:
-        expected += message + '\n'
-    expected += rss.MESSAGES['examples'] + '\n'
-    for message in rss.COMMANDS['add']['examples']:
-        expected += message.format(bot.config.core.prefix) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_help_config(bot):
-    rss._rss_help(bot, ['help', 'config'])
-    expected = rss.COMMANDS['config']['synopsis'].format(bot.config.core.prefix) + '\n'
-    for message in rss.COMMANDS['config']['helptext']:
-        expected += message + '\n'
-    expected += rss.MESSAGES['examples'] + '\n'
-    for message in rss.COMMANDS['config']['examples']:
-        expected += message.format(bot.config.core.prefix) + '\n'
-    expected += rss.MESSAGES['get_help_on_config_keys_with'].format(bot.config.core.prefix, '|'.join(sorted(rss.CONFIG.keys()))) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_help_config_templates(bot):
-    rss._rss_help(bot, ['help', 'config', 'templates'])
-    expected = rss.CONFIG['templates']['synopsis'].format(bot.config.core.prefix) + '\n'
-    for message in rss.CONFIG['templates']['helptext']:
-        expected += message + '\n'
-    expected += rss.MESSAGES['examples'] + '\n'
-    for message in rss.CONFIG['templates']['examples']:
-        expected += message.format(bot.config.core.prefix) + '\n'
-    assert expected == bot.output
-
-
-def test_rss_join(bot):
-    rss._rss_join(bot, ['join'])
-    channels = []
-    for feed in bot.memory['rss']['feeds']:
-        feedchannel = bot.memory['rss']['feeds'][feed]['channel']
-        if feedchannel not in channels:
-            channels.append(feedchannel)
-    assert channels == bot.config.core.channels
-
-
-def test_rss_list_all(bot_rss_list):
-    rss._rss_list(bot_rss_list, ['list'])
-    expected1 = '#channel1 feed1 http://www.site1.com/feed'
-    expected2 = '#channel2 feed2 http://www.site2.com/feed'
-    assert expected1 in bot_rss_list.output
-    assert expected2 in bot_rss_list.output
-
-
-def test_rss_list_feed(bot):
-    rss._rss_list(bot, ['list', 'feed1'])
-    expected = '#channel1 feed1 http://www.site1.com/feed f=fl+ftl\n'
-    assert expected == bot.output
-
-
-def test_rss_list_channel(bot):
-    rss._rss_list(bot, ['list', '#channel1'])
-    expected = '#channel1 feed1 http://www.site1.com/feed f=fl+ftl\n'
-    assert expected == bot.output
-
-
-def test_rss_list_no_feed_found(bot):
-    rss._rss_list(bot, ['list', 'invalid'])
-    assert '' == bot.output
-
-
-def test_rss_templates_get(bot):
-    rss._rss_templates(bot, ['templates', 'feed1'])
-    assert '' == bot.output
-
-
-def test_rss_update_update(bot_rss_update):
-    rss._rss_update(bot_rss_update, ['update'])
-    expected = '\x02[feed1]\x02 Title 1 \x02→\x02 http://www.site1.com/article1\n\x02[feed1]\x02 Title 2 \x02→\x02 http://www.site1.com/article2\n\x02[feed1]\x02 Title 3 \x02→\x02 http://www.site1.com/article3\n'
-    assert expected == bot_rss_update.output
-
-
-def test_rss_update_no_update(bot_rss_update):
-    rss._rss_update(bot_rss_update, ['update'])
-    bot.output = ''
-    rss._rss_update(bot_rss_update, ['update'])
-    assert '' == bot.output
-
-
 def test_config_define_sopelmemory():
     bot = MockSopel('Sopel')
     bot = rss._config_define(bot)
@@ -1051,6 +734,323 @@ def test_help_text_del(bot):
     for message in rss.COMMANDS['del']['examples']:
         expected += message.format(bot.config.core.prefix) + '\n'
     assert expected == bot.output
+
+
+def test_rss_add_feed_add(bot):
+    rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID])
+    assert rss._feed_exists(bot, 'feedname') == True
+
+
+def test_rss_config_feeds_list(bot):
+    rss._rss_add(bot, ['add', '#channel2', 'feed2', FEED_VALID, 'f=p+tlpas'])
+    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
+    bot.output = ''
+    args = ['config', 'feeds']
+    rss._rss_config(bot, args)
+    expected = '#channel1' + rss.CONFIG_SEPARATOR + 'feed1' + rss.CONFIG_SEPARATOR + 'http://www.site1.com/feed' + rss.CONFIG_SEPARATOR + 'f=asl+als,#channel2' + rss.CONFIG_SEPARATOR + 'feed2' + rss.CONFIG_SEPARATOR + FEED_VALID + rss.CONFIG_SEPARATOR + 'f=p+tlpas\n'
+    assert expected == bot.output
+
+
+def test_rss_config_formats_default(bot):
+    rss._rss_config(bot, ['config', 'formats'])
+    expected = 'f=' + rss.FORMAT_DEFAULT + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_formats_list(bot):
+    bot.memory['rss']['formats'] = ['lts+flts','at+at']
+    args = ['config', 'formats']
+    rss._rss_config(bot, args)
+    expected = 'f=lts+flts;f=at+at;f=fl+ftl' + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_formats_output(bot):
+    rss._rss_config(bot, ['config', 'formats', 'f=t+t'])
+    rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID])
+    bot.output = ''
+    rss._rss_get(bot, ['get', 'feedname'])
+    expected = 'Title 1\nTitle 2\nTitle 3\n'
+    assert expected == bot.output
+
+
+def test_rss_config_templates_list(bot):
+    bot.memory['rss']['templates']['t'] = '†{}†'
+    args = ['config', 'templates']
+    rss._rss_config(bot, args)
+    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
+    expected += 't=p|({});t=s|{};t=t|†{}†;t=y|%16→%16 {}\n'
+    expected += rss._config_templates_example(bot) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_templates_invalid_escape_sequence(bot):
+    template = rss.ESCAPE_CHARACTER + '22{}' + rss.ESCAPE_CHARACTER + '20'
+    bot.memory['rss']['templates']['d'] = template
+    args = ['config', 'templates']
+    rss._rss_config(bot, args)
+    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
+    expected += 't=p|({});t=s|{};t=t|{};t=y|%16→%16 {}\n'
+    expected += rss._config_templates_example(bot) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_templates_invalid_backgroundcolor(bot):
+    template = rss.ESCAPE_CHARACTER + '04$20{}' + rss.ESCAPE_CHARACTER + '20'
+    bot.memory['rss']['templates']['d'] = template
+    args = ['config', 'templates']
+    rss._rss_config(bot, args)
+    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
+    expected += 't=p|({});t=s|{};t=t|{};t=y|%16→%16 {}\n'
+    expected += rss._config_templates_example(bot) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_templates_light_green_foreground(bot):
+    template = rss.ESCAPE_CHARACTER + '09{}' + rss.ESCAPE_CHARACTER + '20'
+    bot.memory['rss']['templates']['d'] = template
+    args = ['config', 'templates']
+    rss._rss_config(bot, args)
+    expected = 't=a|<{}>;t=d|%09{}%20;t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
+    expected += 't=p|({});t=s|{};t=t|{};t=y|%16→%16 {}\n'
+    expected += rss._config_templates_example(bot) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_templates_pink_on_silver(bot):
+    template = rss.ESCAPE_CHARACTER + '13$15{}' + rss.ESCAPE_CHARACTER + '20'
+    bot.memory['rss']['templates']['d'] = template
+    args = ['config', 'templates']
+    rss._rss_config(bot, args)
+    expected = 't=a|<{}>;t=d|%13$15{}%20;t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
+    expected += 't=p|({});t=s|{};t=t|{};t=y|%16→%16 {}\n'
+    expected += rss._config_templates_example(bot) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_templates_output_escape_character(bot):
+    template = rss.ESCAPE_CHARACTER + rss.ESCAPE_CHARACTER + '{}'
+    bot.memory['rss']['templates']['s'] = template
+    args = ['config', 'templates']
+    rss._rss_config(bot, args)
+    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
+    expected += 't=p|({});t=s|%%{};t=t|{};t=y|%16→%16 {}\n'
+    expected += rss._config_templates_example(bot) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_templates_output_dollar(bot):
+    template = rss.ESCAPE_CHARACTER + '${}'
+    bot.memory['rss']['templates']['s'] = template
+    args = ['config', 'templates']
+    rss._rss_config(bot, args)
+    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
+    expected += 't=p|({});t=s|%${};t=t|{};t=y|%16→%16 {}\n'
+    expected += rss._config_templates_example(bot) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_templates_output_dollar_after_control_sequence(bot):
+    template = rss.ESCAPE_CHARACTER + '17' + rss.ESCAPE_CHARACTER + '${}%16'
+    bot.memory['rss']['templates']['s'] = template
+    args = ['config', 'templates']
+    rss._rss_config(bot, args)
+    expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
+    expected += 't=p|({});t=s|%17%${}%16;t=t|{};t=y|%16→%16 {}\n'
+    expected += rss._config_templates_example(bot) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_config_invalid_key(bot):
+    rss._rss_config(bot, ['config', 'invalidkey'])
+    expected = ''
+    assert expected == bot.output
+
+
+def test_rss_del_feed_nonexistent(bot):
+    rss._rss_del(bot, ['del', 'abcd'])
+    expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
+    assert expected == bot.output
+
+
+def test_rss_del_feed_delete(bot):
+    rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID])
+    rss._rss_del(bot, ['del', 'feedname'])
+    assert rss._feed_exists(bot, 'feedname') == False
+
+
+def test_rss_fields_feed_nonexistent(bot):
+    rss._rss_fields(bot, ['fields', 'abcd'])
+    expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
+    assert expected == bot.output
+
+
+def test_rss_fields_get_default(bot):
+    rss._rss_fields(bot, ['fields', 'feed1'])
+    expected = rss.MESSAGES['fields_of_feed_are'].format('feed1', 'fadglpsty') + '\n'
+    assert expected == bot.output
+
+
+def test_rss_fields_get_custom(bot):
+    rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID, 'f=fltp+atl'])
+    bot.output = ''
+    rss._rss_fields(bot, ['fields', 'feedname'])
+    expected = rss.MESSAGES['fields_of_feed_are'].format('feedname', 'fadglpsty') + '\n'
+    assert expected == bot.output
+
+
+def test_rss_formats_feed_nonexistent(bot):
+    rss._rss_formats(bot, ['format', 'abcd'])
+    expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
+    assert expected == bot.output
+
+
+def test_rss_formats_feed_get(bot):
+    rss._rss_formats(bot, ['format', 'feed1', 'f=yt+ytl'])
+    bot.output = ''
+    rss._rss_formats(bot, ['format', 'feed1'])
+    expected = rss.MESSAGES['format_of_feed_is'].format('feed1', 'f=yt+ytl') + '\n'
+    assert expected == bot.output
+
+
+def test_rss_formats_format_unchanged(bot):
+    format_old = bot.memory['rss']['options']['feed1'].get_format()
+    rss._rss_formats(bot, ['format', 'feed1', 'f=abcd+efgh'])
+    format_new = bot.memory['rss']['options']['feed1'].get_format()
+    assert format_old == format_new
+    expected = rss.MESSAGES['consider_rss_fields'].format(bot.config.core.prefix, 'feed1') + '\n'
+    assert expected == bot.output
+
+
+def test_rss_formats_format_changed(bot):
+    format_old = bot.memory['rss']['options']['feed1'].get_format()
+    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
+    format_new = bot.memory['rss']['options']['feed1'].get_format()
+    assert format_old != format_new
+
+
+def test_rss_formats_format_set(bot):
+    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
+    format_new = bot.memory['rss']['options']['feed1'].get_format()
+    assert 'f=asl+als' == format_new
+
+
+def test_rss_formats_format_output(bot_rss_update):
+    rss._rss_formats(bot_rss_update, ['format', 'feed1', 'f=fadglpst+fadglpst'])
+    rss._rss_update(bot_rss_update, ['update'])
+    expected = rss.MESSAGES['format_of_feed_has_been_set_to'].format('feed1', 'f=fadglpst+fadglpst') + '''
+\x02[feed1]\x02 <Author 1> Description of article 1 1 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article1 (2016-08-21 01:10) Description of article 1 Title 1
+\x02[feed1]\x02 <Author 2> Description of article 2 2 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article2 (2016-08-22 02:20) Description of article 2 Title 2
+\x02[feed1]\x02 <Author 3> Description of article 3 3 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article3 (2016-08-23 03:30) Description of article 3 Title 3
+'''
+    assert expected == bot_rss_update.output
+
+
+def test_rss_get_feed_nonexistent(bot):
+    rss._rss_get(bot, ['get', 'abcd'])
+    expected = rss.MESSAGES['feed_does_not_exist'].format('abcd') + '\n'
+    assert expected == bot.output
+
+
+def test_rss_get_post_feed_items(bot):
+    rss._feed_add(bot, '#channel', 'feedname', FEED_VALID)
+    rss._rss_get(bot, ['get', 'feedname'])
+    expected = '\x02[feedname]\x02 Title 1 \x02→\x02 http://www.site1.com/article1\n\x02[feedname]\x02 Title 2 \x02→\x02 http://www.site1.com/article2\n\x02[feedname]\x02 Title 3 \x02→\x02 http://www.site1.com/article3\n'
+    assert expected == bot.output
+
+
+def test_rss_help_synopsis_help(bot):
+    rss._rss_help(bot, ['help'])
+    expected = rss.COMMANDS['help']['synopsis'].format(bot.config.core.prefix) + '\n'
+    expected += rss.MESSAGES['command_is_one_of'].format('|'.join(sorted(rss.COMMANDS.keys()))) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_help_add(bot):
+    rss._rss_help(bot, ['help', 'add'])
+    expected = rss.COMMANDS['add']['synopsis'].format(bot.config.core.prefix) + '\n'
+    for message in rss.COMMANDS['add']['helptext']:
+        expected += message + '\n'
+    expected += rss.MESSAGES['examples'] + '\n'
+    for message in rss.COMMANDS['add']['examples']:
+        expected += message.format(bot.config.core.prefix) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_help_config(bot):
+    rss._rss_help(bot, ['help', 'config'])
+    expected = rss.COMMANDS['config']['synopsis'].format(bot.config.core.prefix) + '\n'
+    for message in rss.COMMANDS['config']['helptext']:
+        expected += message + '\n'
+    expected += rss.MESSAGES['examples'] + '\n'
+    for message in rss.COMMANDS['config']['examples']:
+        expected += message.format(bot.config.core.prefix) + '\n'
+    expected += rss.MESSAGES['get_help_on_config_keys_with'].format(bot.config.core.prefix, '|'.join(sorted(rss.CONFIG.keys()))) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_help_config_templates(bot):
+    rss._rss_help(bot, ['help', 'config', 'templates'])
+    expected = rss.CONFIG['templates']['synopsis'].format(bot.config.core.prefix) + '\n'
+    for message in rss.CONFIG['templates']['helptext']:
+        expected += message + '\n'
+    expected += rss.MESSAGES['examples'] + '\n'
+    for message in rss.CONFIG['templates']['examples']:
+        expected += message.format(bot.config.core.prefix) + '\n'
+    assert expected == bot.output
+
+
+def test_rss_join(bot):
+    rss._rss_join(bot, ['join'])
+    channels = []
+    for feed in bot.memory['rss']['feeds']:
+        feedchannel = bot.memory['rss']['feeds'][feed]['channel']
+        if feedchannel not in channels:
+            channels.append(feedchannel)
+    assert channels == bot.config.core.channels
+
+
+def test_rss_list_all(bot_rss_list):
+    rss._rss_list(bot_rss_list, ['list'])
+    expected1 = '#channel1 feed1 http://www.site1.com/feed'
+    expected2 = '#channel2 feed2 http://www.site2.com/feed'
+    assert expected1 in bot_rss_list.output
+    assert expected2 in bot_rss_list.output
+
+
+def test_rss_list_feed(bot):
+    rss._rss_list(bot, ['list', 'feed1'])
+    expected = '#channel1 feed1 http://www.site1.com/feed f=fl+ftl\n'
+    assert expected == bot.output
+
+
+def test_rss_list_channel(bot):
+    rss._rss_list(bot, ['list', '#channel1'])
+    expected = '#channel1 feed1 http://www.site1.com/feed f=fl+ftl\n'
+    assert expected == bot.output
+
+
+def test_rss_list_no_feed_found(bot):
+    rss._rss_list(bot, ['list', 'invalid'])
+    assert '' == bot.output
+
+
+def test_rss_templates_get(bot):
+    rss._rss_templates(bot, ['templates', 'feed1'])
+    assert '' == bot.output
+
+
+def test_rss_update_update(bot_rss_update):
+    rss._rss_update(bot_rss_update, ['update'])
+    expected = '\x02[feed1]\x02 Title 1 \x02→\x02 http://www.site1.com/article1\n\x02[feed1]\x02 Title 2 \x02→\x02 http://www.site1.com/article2\n\x02[feed1]\x02 Title 3 \x02→\x02 http://www.site1.com/article3\n'
+    assert expected == bot_rss_update.output
+
+
+def test_rss_update_no_update(bot_rss_update):
+    rss._rss_update(bot_rss_update, ['update'])
+    bot.output = ''
+    rss._rss_update(bot_rss_update, ['update'])
+    assert '' == bot.output
 
 
 def test_options_get_format_custom(bot, feedreader_feed_valid):
