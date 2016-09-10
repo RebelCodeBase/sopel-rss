@@ -155,7 +155,7 @@ COMMANDS = {
         'function': '_rss_list'
     },
     'templates': {
-        'synopsis': 'synopsis: {}rss templates <name> [t=<template>]',
+        'synopsis': 'synopsis: {}rss templates <name> [t=<field>' + TEMPLATE_SEPARATOR + '<template>]',
         'helptext': ['get the templates for the feed identified by <name>.',
                      'or set the templates for the feed identified by <name>.',
                      'a template is separated by the separator "' + CONFIG_SEPARATOR + '", multiple templates are separated by the separator "' + TEMPLATE_SEPARATOR + '"',
@@ -234,12 +234,10 @@ MESSAGES = {
         'feed name "{}" is already in use, please choose a different name',
     'feed_does_not_exist':
         'feed "{}" doesn\'t exist!',
-    'fields_of_feed_are':
-        'fields of feed "{}" are "{}"',
-    'format_of_feed_is':
-        'format of feed "{}" is "{}"',
-    'format_of_feed_has_been_set_to':
-        'format of feed "{}" has been set to "{}"',
+    'fields_of_feed':
+        'fields of feed "{}": "{}"',
+    'format_of_feed':
+        'format of feed "{}": {}',
     'get_help_on_config_keys_with':
         'get help on config keys with: {}rss help config {}',
     'read_hashes_of_feed_from_sqlite_table':
@@ -252,10 +250,8 @@ MESSAGES = {
         'saved hash "{}" of feed "{}" to sqlite table "{}"',
     'synopsis_rss':
         'synopsis: {}rss {}',
-    'templates_of_feed_are':
-        'templates of feed "{}" are "{}"',
-    'templates_of_feed_have_been_set_to':
-        'templates of feed "{}" have been set to "{}"',
+    'templates_of_feed':
+        'templates of feed "{}": {}',
     'unable_to_read_feed':
         'unable to read feed',
     'unable_to_read_url_of_feed':
@@ -431,8 +427,6 @@ def _config_read(bot):
 
 # save config from memory to disk
 def _config_save(bot):
-    if not bot.memory['rss']['feeds'] or not bot.memory['rss']['formats'] or not bot.memory['rss']['templates']:
-        return
 
     # we want no more than MAX_HASHES in our database
     for feedname in bot.memory['rss']['feeds']:
@@ -882,7 +876,7 @@ def _rss_fields(bot, args):
         return
 
     fields = bot.memory['rss']['options'][feedname].get_fields()
-    message = MESSAGES['fields_of_feed_are'].format(feedname, fields)
+    message = MESSAGES['fields_of_feed'].format(feedname, fields)
     bot.say(message)
 
 
@@ -896,7 +890,7 @@ def _rss_formats(bot, args):
 
     if len(args) == 2:
         format = bot.memory['rss']['options'][feedname].get_format()
-        message = MESSAGES['format_of_feed_is'].format(feedname, format)
+        message = MESSAGES['format_of_feed'].format(feedname, format)
         bot.say(message)
         return
 
@@ -908,7 +902,7 @@ def _rss_formats(bot, args):
 
     if not format_before == format_after:
         _config_save(bot)
-        message = MESSAGES['format_of_feed_has_been_set_to'].format(feedname, format_after)
+        message = MESSAGES['format_of_feed'].format(feedname, format_after)
         LOGGER.debug(message)
         bot.say(message)
         return
@@ -991,7 +985,7 @@ def _rss_templates(bot, args):
     if len(args) == 2:
         templates = bot.memory['rss']['options'][feedname].get_templates()
         if templates:
-            message = MESSAGES['templates_of_feed_are'].format(feedname, templates)
+            message = MESSAGES['templates_of_feed'].format(feedname, templates)
             bot.say(message)
             message = _feed_templates_example(bot, feedname)
             bot.say(message)
@@ -1004,7 +998,7 @@ def _rss_templates(bot, args):
 
     if not templates_before == templates_after:
         _config_save(bot)
-        message = MESSAGES['templates_of_feed_have_been_set_to'].format(feedname, templates_after)
+        message = MESSAGES['templates_of_feed'].format(feedname, templates_after)
         LOGGER.debug(message)
         bot.say(message)
 
@@ -1135,21 +1129,7 @@ class Options:
             'y': shorturl,
         }
 
-        templates = dict()
-
-        # use global default templates as basis
-        for t in TEMPLATES_DEFAULT:
-            templates[t] = TEMPLATES_DEFAULT[t]
-
-        # use custom default templates as overrides
-        for t in self.bot.memory['rss']['templates']:
-            if self.is_template_valid(self.bot.memory['rss']['templates'][t]):
-                templates[t] = self.bot.memory['rss']['templates'][t]
-
-        # use custom feed templates as overrides
-        for t in self.templates:
-            if self.is_template_valid(self.templates[t]):
-                templates[t] = self.templates[t]
+        templates = self._get_templates_overrides()
 
         post = ''
         for f in self.get_output():
@@ -1384,6 +1364,25 @@ class Options:
             remainder = ''
 
         return hashed, output, remainder
+
+    def _get_templates_overrides(self):
+        templates = dict()
+
+        # use global default templates as basis
+        for t in TEMPLATES_DEFAULT:
+            templates[t] = TEMPLATES_DEFAULT[t]
+
+        # use custom default templates as overrides
+        for t in self.bot.memory['rss']['templates']:
+            if self.is_template_valid(self.bot.memory['rss']['templates'][t]):
+                templates[t] = self.bot.memory['rss']['templates'][t]
+
+        # use custom feed templates as overrides
+        for t in self.templates:
+            if self.is_template_valid(self.templates[t]):
+                templates[t] = self.templates[t]
+
+        return templates
 
     def _is_format_valid(self, hashed, output, remainder, fields =''):
 

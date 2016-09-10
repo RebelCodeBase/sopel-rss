@@ -221,7 +221,7 @@ def test_rss_global_feed_delete(bot):
 
 def test_rss_global_fields_get(bot):
     rss._rss(bot, ['fields', 'feed1'])
-    expected = rss.MESSAGES['fields_of_feed_are'].format('feed1', 'fadglpsty') + '\n'
+    expected = rss.MESSAGES['fields_of_feed'].format('feed1', 'fadglpsty') + '\n'
     assert expected == bot.output
 
 
@@ -902,7 +902,7 @@ def test_rss_fields_feed_nonexistent(bot):
 
 def test_rss_fields_get_default(bot):
     rss._rss_fields(bot, ['fields', 'feed1'])
-    expected = rss.MESSAGES['fields_of_feed_are'].format('feed1', 'fadglpsty') + '\n'
+    expected = rss.MESSAGES['fields_of_feed'].format('feed1', 'fadglpsty') + '\n'
     assert expected == bot.output
 
 
@@ -910,7 +910,7 @@ def test_rss_fields_get_custom(bot):
     rss._rss_add(bot, ['add', '#channel', 'feedname', FEED_VALID, 'f=fltp+atl'])
     bot.output = ''
     rss._rss_fields(bot, ['fields', 'feedname'])
-    expected = rss.MESSAGES['fields_of_feed_are'].format('feedname', 'fadglpsty') + '\n'
+    expected = rss.MESSAGES['fields_of_feed'].format('feedname', 'fadglpsty') + '\n'
     assert expected == bot.output
 
 
@@ -924,7 +924,7 @@ def test_rss_formats_feed_get(bot):
     rss._rss_formats(bot, ['format', 'feed1', 'f=yt+ytl'])
     bot.output = ''
     rss._rss_formats(bot, ['format', 'feed1'])
-    expected = rss.MESSAGES['format_of_feed_is'].format('feed1', 'f=yt+ytl') + '\n'
+    expected = rss.MESSAGES['format_of_feed'].format('feed1', 'f=yt+ytl') + '\n'
     assert expected == bot.output
 
 
@@ -953,12 +953,18 @@ def test_rss_formats_format_set(bot):
 def test_rss_formats_format_output(bot_rss_update):
     rss._rss_formats(bot_rss_update, ['format', 'feed1', 'f=fadglpst+fadglpst'])
     rss._rss_update(bot_rss_update, ['update'])
-    expected = rss.MESSAGES['format_of_feed_has_been_set_to'].format('feed1', 'f=fadglpst+fadglpst') + '''
+    expected = rss.MESSAGES['format_of_feed'].format('feed1', 'f=fadglpst+fadglpst') + '''
 \x02[feed1]\x02 <Author 1> Description of article 1 1 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article1 (2016-08-21 01:10) Description of article 1 Title 1
 \x02[feed1]\x02 <Author 2> Description of article 2 2 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article2 (2016-08-22 02:20) Description of article 2 Title 2
 \x02[feed1]\x02 <Author 3> Description of article 3 3 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article3 (2016-08-23 03:30) Description of article 3 Title 3
 '''
     assert expected == bot_rss_update.output
+
+
+def test_rss_formats_changes_are_saved(bot):
+    rss._rss_formats(bot, ['format', 'feed1', 'f=asl+als'])
+    expected = ['#channel1;feed1;http://www.site1.com/feed;f=asl+als']
+    assert expected == bot.config.rss.feeds
 
 
 def test_rss_get_feed_nonexistent(bot):
@@ -1050,22 +1056,22 @@ def test_rss_list_no_feed_found(bot):
     assert '' == bot.output
 
 
-def test_rss_templates_get(bot):
+def test_rss_templates_get_default(bot):
     rss._rss_templates(bot, ['templates', 'feed1'])
     assert '' == bot.output
 
 
-def test_rss_templates_get(bot):
+def test_rss_templates_get_custom(bot):
     rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06%16[{}]%20'])
     bot.output = ''
     rss._rss_templates(bot, ['templates', 'feed1'])
-    expected = 'templates of feed "feed1" are "t=f|%06%16[{}]%20"\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
+    expected = 'templates of feed "feed1": t=f|%06%16[{}]%20\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
     assert expected == bot.output
 
 
 def test_rss_templates_set(bot):
     rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06%16[{}]%20'])
-    expected = 'templates of feed "feed1" have been set to "t=f|%06%16[{}]%20"\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
+    expected = 'templates of feed "feed1": t=f|%06%16[{}]%20\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
     assert expected == bot.output
 
 
@@ -1090,6 +1096,12 @@ def test_rss_templates_override(bot):
     rss._rss_get(bot, ['get', 'feed'])
     expected = 'feedauthor:Author 1 addguid:1 at http://www.site1.com/ defaultpublished:2016-08-21 01:10 feedtitle:Title 1\nfeedauthor:Author 2 addguid:2 at http://www.site1.com/ defaultpublished:2016-08-22 02:20 feedtitle:Title 2\nfeedauthor:Author 3 addguid:3 at http://www.site1.com/ defaultpublished:2016-08-23 03:30 feedtitle:Title 3\n'
     assert expected == bot.output
+
+
+def test_rss_templates_changes_are_saved(bot):
+    rss._rss_templates(bot, ['format', 'feed1', 't=t|...{}...'])
+    expected = ['#channel1;feed1;http://www.site1.com/feed;t=t|...{}...']
+    assert expected == bot.config.rss.feeds
 
 
 def test_rss_update_update(bot_rss_update):
