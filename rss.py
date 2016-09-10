@@ -24,6 +24,8 @@ MAX_HASHES_PER_FEED = 300
 
 UPDATE_INTERVAL = 60 # seconds
 
+CONFIG_SEPARATOR = ';'
+
 FORMAT_DEFAULT = 'fl+ftl'
 
 FORMAT_SEPARATOR = '+'
@@ -70,10 +72,11 @@ TEMPLATES_DEFAULT = {
 
 COMMANDS = {
     'add': {
-        'synopsis': 'synopsis: {}rss add <channel> <name> <url> [<format>]',
+        'synopsis': 'synopsis: {}rss add <channel> <name> <url> [<options>]',
         'helptext': ['add a feed identified by <name> with feed address <url> to irc channel <channel>. optional: add a format string.'],
         'examples' : ['{}rss add #sopel-test guardian https://www.theguardian.com/world/rss',
-                      '{}rss add #sopel-test guardian https://www.theguardian.com/world/rss ' + FORMAT_DEFAULT],
+                      '{}rss add #sopel-test guardian https://www.theguardian.com/world/rss ' + 'f=' + FORMAT_DEFAULT,
+                      '{}rss add #sopel-test guardian https://www.theguardian.com/world/rss ' + 'f=' + FORMAT_DEFAULT + CONFIG_SEPARATOR + 't=t|«{}»'],
         'required': 3,
         'optional': 1,
         'function': '_rss_add'
@@ -195,8 +198,8 @@ MESSAGES = {
         'added ring buffer for feed "{}"',
     'added_rss_feed_to_channel_with_url':
         'added rss feed "{}" to channel "{}" with url "{}"',
-    'added_rss_feed_to_channel_with_url_and_format':
-        'added rss feed "{}" to channel "{}" with url "{}" and format "{}"',
+    'added_rss_feed_to_channel_with_url_and_options':
+        'added rss feed "{}" to channel "{}" with url "{}" and options "{}"',
     'added_sqlite_table_for_feed':
         'added sqlite table "{}" for feed "{}"',
     'channel_must_start_with_a_hash_sign':
@@ -503,11 +506,14 @@ def _config_concatenate_channels(bot):
 def _config_concatenate_feeds(bot):
     feeds = []
     for feedname, feed in bot.memory['rss']['feeds'].items():
-        newfeed = feed['channel'] + '|' + feed['name'] + '|' + feed['url']
-        format = bot.memory['rss']['options'][feedname].get_format()
-        format_default = bot.memory['rss']['options'][feedname].get_default()
-        if format != format_default:
-            newfeed += '|' + format
+        newfeed = feed['channel']
+        newfeed += CONFIG_SEPARATOR + feed['name']
+        newfeed += CONFIG_SEPARATOR + feed['url']
+
+        options = bot.memory['rss']['options'][feedname].get_options()
+        if options:
+            newfeed += CONFIG_SEPARATOR + options
+
         feeds.append(newfeed)
         feeds.sort()
     return [','.join(feeds)]
@@ -519,8 +525,8 @@ def _config_concatenate_formats(bot):
 
         # only save formats that differ from the default
         if not format == FORMAT_DEFAULT:
-            formats.append(format)
-    return [','.join(formats)]
+            formats.append('f=' + format)
+    return [CONFIG_SEPARATOR.join(formats)]
 
 
 def _config_concatenate_templates(bot):
@@ -530,9 +536,9 @@ def _config_concatenate_templates(bot):
 
         #only save template that differ from the default
         if not TEMPLATES_DEFAULT[field] == template:
-            templates.append(field + '|' + template)
+            templates.append('t=' + field + '|' + template)
     templates.sort()
-    return [','.join(templates)]
+    return [CONFIG_SEPARATOR.join(templates)]
 
 
 def _config_define(bot):
@@ -555,8 +561,8 @@ def _config_get_feeds(bot):
 def _config_get_formats(bot):
     formats = _config_concatenate_formats(bot)[0]
     if formats:
-        formats += ','
-    formats += FORMAT_DEFAULT
+        formats += CONFIG_SEPARATOR
+    formats += 'f=' + FORMAT_DEFAULT
     bot.say(formats)
 
 
@@ -570,14 +576,14 @@ def _config_get_templates(bot):
         except KeyError:
             template = TEMPLATES_DEFAULT[field]
 
-        template_string = Options(bot).template_to_irc(field + '|' + template)
+        template_string = Options(bot).template_to_irc(template)
 
         # if the conversion did not work use the default template
         if not template_string:
             template = TEMPLATES_DEFAULT[field]
-        templates.append(field + '|' + template)
+        templates.append('t=' + field + '|' + template)
     templates.sort()
-    bot.say(','.join(templates))
+    bot.say(CONFIG_SEPARATOR.join(templates))
     bot.say(_config_templates_example(bot))
 
 
@@ -590,11 +596,13 @@ def _config_read(bot):
 
     # read default formats from config file
     if bot.config.rss.formats and bot.config.rss.formats[0]:
-        _config_split_formats(bot, bot.config.rss.formats)
+        formats = bot.config.rss.formats[0].split(CONFIG_SEPARATOR)
+        _config_split_formats(bot, formats)
 
     # read default templates from config file
     if bot.config.rss.templates and bot.config.rss.templates[0]:
-        _config_split_templates(bot, bot.config.rss.templates)
+        templates = bot.config.rss.templates[0].split(CONFIG_SEPARATOR)
+        _config_split_templates(bot, templates)
 
     message = 'read config from disk'
     LOGGER.debug(message)
@@ -629,12 +637,12 @@ def _config_set_feeds(bot, value):
 
 
 def _config_set_formats(bot, value):
-    formats = value.split(',')
+    formats = value.split(CONFIG_SEPARATOR)
     return _config_split_formats(bot, formats)
 
 
 def _config_set_templates(bot, value):
-    templates = value.split(',')
+    templates = value.split(CONFIG_SEPARATOR)
     result = _config_split_templates(bot, templates)
     _config_get_templates(bot)
     return result
@@ -644,10 +652,12 @@ def _config_split_feeds(bot, feeds):
     before = len(bot.memory['rss']['feeds'])
 
     for feed in feeds:
-
+        print('feed: ')
+        print(feed)
         # split feed by pipes
-        atoms = feed.split('|')
-
+        atoms = feed.split(CONFIG_SEPARATOR)
+        print('atoms: ')
+        print(atoms)
         try:
             channel = atoms[0]
             feedname = atoms[1]
@@ -656,13 +666,14 @@ def _config_split_feeds(bot, feeds):
             continue
 
         try:
-            format = atoms[3]
+            options = CONFIG_SEPARATOR.join(atoms[3:])
         except IndexError:
-            format = ''
-
+            options = ''
+        print('options: ')
+        print(options)
         feedreader = FeedReader(url)
         if _feed_check(bot, feedreader, channel, feedname) == []:
-            _feed_add(bot, channel, feedname, url, format)
+            _feed_add(bot, channel, feedname, url, options)
             _hashes_read(bot, feedname)
 
     after = len(bot.memory['rss']['feeds'])
@@ -678,6 +689,9 @@ def _config_split_formats(bot, formats):
         fields += f
 
     for format in formats:
+        if not format.startswith('f='):
+            continue
+        format = format[2:]
 
         # check if format contains only valid fields
         if not set(format) <= set(fields + FORMAT_SEPARATOR):
@@ -701,7 +715,9 @@ def _config_split_templates(bot, templates):
         bot.memory['rss']['templates'][f] = TEMPLATES_DEFAULT[f]
 
     for template in templates:
-        atoms = template.split('|')
+        if not template.startswith('t='):
+            continue
+        atoms = template[2:].split('|')
         if len(atoms) == 2:
             if Options(bot).is_template_valid(atoms[1]):
                 bot.memory['rss']['templates'][atoms[0]] = atoms[1]
@@ -712,7 +728,7 @@ def _config_split_templates(bot, templates):
 
 def  _config_templates_example(bot):
     feedreader = MockFeedReader(FEED_EXAMPLE)
-    options = Options(bot, feedreader, 'fl+adfglpsty')
+    options = Options(bot, feedreader, 'f=fl+adfglpsty')
     feed = feedreader.get_feed()
     item = feed['entries'][0]
     return options.get_post('Feedname', item)
@@ -801,7 +817,7 @@ def _digest_tablename(feedname):
     return 'rss_' + hashlib.md5(feedname.encode('utf-8')).hexdigest()
 
 
-def _feed_add(bot, channel, feedname, url, format=''):
+def _feed_add(bot, channel, feedname, url, options=''):
     # create hash table for this feed in sqlite3 database provided by the sopel framework
     result = _db_check_if_table_exists(bot, feedname)
     if not result:
@@ -814,7 +830,7 @@ def _feed_add(bot, channel, feedname, url, format=''):
 
     # create new Options to handle feed hashing and output
     feedreader = FeedReader(url)
-    bot.memory['rss']['options'][feedname] = Options(bot, feedreader, format)
+    bot.memory['rss']['options'][feedname] = Options(bot, feedreader, options)
     message = MESSAGES['added_feed_formater_for_feed'].format(feedname)
     LOGGER.debug(message)
 
@@ -822,8 +838,8 @@ def _feed_add(bot, channel, feedname, url, format=''):
     bot.memory['rss']['feeds'][feedname] = { 'channel': channel, 'name': feedname, 'url': url }
 
     message_info = MESSAGES['added_rss_feed_to_channel_with_url'].format(feedname, channel, url)
-    if format:
-        message_info = MESSAGES['added_rss_feed_to_channel_with_url_and_format'].format(feedname, channel, url, format)
+    if options:
+        message_info = MESSAGES['added_rss_feed_to_channel_with_url_and_options'].format(feedname, channel, url, options)
     LOGGER.info(message_info)
 
     return message_info
@@ -954,28 +970,27 @@ class Options:
 
     LOGGER = get_logger(__name__)
 
-    def __init__(self, bot, feedreader = '', format = ''):
+    def __init__(self, bot, feedreader = '', options = ''):
         self.bot = bot
+
         if feedreader == '':
             self.feedreader = FeedReader('')
         else:
             self.feedreader = feedreader
-        self.separator = FORMAT_SEPARATOR
-        if format:
-            self.set_minimal()
-            self.set_format(format)
-        else:
-            self.format = ''
 
-    def get_default(self):
+        self.separator = FORMAT_SEPARATOR
+
+        self._options_parse(options)
+
+    def get_format_default(self):
         for format in self.bot.memory['rss']['formats']:
-            return format
-        return FORMAT_DEFAULT
+            return 'f=' + format
+        return 'f=' + FORMAT_DEFAULT
 
     def get_format(self):
         if self.format:
-            return self.format
-        return self.get_default()
+            return 'f=' + self.format
+        return self.get_format_default()
 
     def get_fields(self):
         return self._format_get_fields(self.feedreader)
@@ -1012,11 +1027,19 @@ class Options:
         hashed, output, remainder = self._format_split(self.get_format(), self.separator)
         return hashed
 
-    def get_minimal(self):
+    def get_format_minimal(self):
         fields = self._format_get_fields(self.feedreader)
         if 't' in fields:
             return 'ft+ft'
         return 'fd+fd'
+
+    def get_options(self):
+        options = ''
+        if self.format:
+            options += 'f=' + self.format
+        for t in self.templates:
+            options += CONFIG_SEPARATOR + 't=' + t
+        return options
 
     def get_output(self):
         hashed, output, remainder = self._format_split(self.get_format(), self.separator)
@@ -1051,12 +1074,20 @@ class Options:
         }
 
         templates = dict()
+
+        # use global default templates as basis
         for t in TEMPLATES_DEFAULT:
             templates[t] = TEMPLATES_DEFAULT[t]
 
+        # use custom default templates as overrides
         for t in self.bot.memory['rss']['templates']:
             if self.is_template_valid(self.bot.memory['rss']['templates'][t]):
                 templates[t] = self.bot.memory['rss']['templates'][t]
+
+        # use custom feed templates as overrides
+        for t in self.templates:
+            if self.is_template_valid(self.templates[t]):
+                templates[t] = self.templates[t]
 
         post = ''
         for f in self.get_output():
@@ -1066,7 +1097,7 @@ class Options:
 
     def is_format_valid(self, format, separator, fields = ''):
         hashed, output, remainder = self._format_split(format, separator)
-        return(self._format_valid(hashed, output, remainder, fields))
+        return(self._is_format_valid(hashed, output, remainder, fields))
 
     def is_template_valid(self, template):
 
@@ -1080,14 +1111,18 @@ class Options:
         return True
 
     def set_format(self, format_new=''):
+        if not format_new.startswith('f='):
+            format_new = ''
+        else:
+            format_new = format_new[2:]
         format_sanitized = self._format_sanitize(format_new)
         if format_new and format_new != format_sanitized:
             return self.format
         self.format = format_sanitized
-        return self.format
+        return 'f=' + self.format
 
-    def set_minimal(self):
-        self.format = self.get_minimal()
+    def set_format_minimal(self):
+        self.format = self.get_format_minimal()
         return self.format
 
     def template_to_irc(self, template):
@@ -1232,22 +1267,22 @@ class Options:
         # check if format is valid
         if format:
             hashed, output, remainder = self._format_split(format, self.separator)
-            if self._format_valid(hashed, output, remainder):
+            if self._is_format_valid(hashed, output, remainder):
                 return hashed + self.separator + output
 
         # check in turn if each default format is valid
         for format in self.bot.memory['rss']['formats']:
             hashed, output, remainder = self._format_split(format, self.separator)
-            if self._format_valid(hashed, output, remainder):
+            if self._is_format_valid(hashed, output, remainder):
                 return hashed + self.separator + output
 
         # check if global default format is valid
         hashed, output, remainder = self._format_split(FORMAT_DEFAULT, self.separator)
-        if self._format_valid(hashed, output, remainder):
+        if self._is_format_valid(hashed, output, remainder):
             return hashed + self.separator + output
 
         # else return the minimal valid format
-        return self.get_minimal()
+        return self.get_format_minimal()
 
 
     def _format_split(self, format, separator):
@@ -1265,7 +1300,7 @@ class Options:
 
         return hashed, output, remainder
 
-    def _format_valid(self, hashed, output, remainder, fields =''):
+    def _is_format_valid(self, hashed, output, remainder, fields =''):
 
         # check format for duplicate separators
         if remainder:
@@ -1309,6 +1344,26 @@ class Options:
             return False
 
         return True
+
+    def _options_parse(self, options):
+        self.format = ''
+        self.templates = dict()
+
+        if not options:
+            return
+
+        options_split = options.split(CONFIG_SEPARATOR)
+
+        for option in options_split:
+            if option.startswith('f='):
+                self.set_format_minimal()
+                self.set_format(option)
+            elif option.startswith('t='):
+                atoms = option.split('|')
+                if not len(atoms) == 2:
+                    continue
+                if self.is_template_valid(atoms[1]):
+                    self.templates[atoms[0]] = atoms[1]
 
     def _value_sanitize(self, key, item):
         if hasattr(item, key):
