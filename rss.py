@@ -1001,6 +1001,7 @@ def _rss_templates(bot, args):
     templates_before = bot.memory['rss']['options'][feedname].get_templates()
     bot.memory['rss']['options'][feedname].set_templates(templates)
     templates_after = bot.memory['rss']['options'][feedname].get_templates()
+
     if not templates_before == templates_after:
         _config_save(bot)
         message = MESSAGES['templates_of_feed_have_been_set_to'].format(feedname, templates_after)

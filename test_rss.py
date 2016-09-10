@@ -399,10 +399,10 @@ def test_config_read_template_custom(bot_basic):
 
 def test_config_save_writes(bot_config_save):
     bot_config_save.memory['rss']['options']['feed1'].set_format('f=fl+ftl')
+    bot_config_save.memory['rss']['options']['feed1'].set_templates('t=t|>>{}<<')
     bot_config_save.memory['rss']['formats'] = ['ft+ftpal']
     for t in rss.TEMPLATES_DEFAULT:
         bot_config_save.memory['rss']['templates'][t] = rss.TEMPLATES_DEFAULT[t]
-    bot_config_save.memory['rss']['templates']['a'] = '<{}>'
     bot_config_save.memory['rss']['templates']['t'] = '<<{}>>'
     rss._config_save(bot_config_save)
     expected = '''[core]
@@ -413,7 +413,7 @@ db_filename = ''' + bot_config_save.db.filename + '''
 channels = #channel1
 
 [rss]
-feeds = #channel1''' + rss.CONFIG_SEPARATOR + '''feed1''' + rss.CONFIG_SEPARATOR + '''http://www.site1.com/feed''' + rss.CONFIG_SEPARATOR + '''f=fl+ftl
+feeds = #channel1''' + rss.CONFIG_SEPARATOR + '''feed1''' + rss.CONFIG_SEPARATOR + '''http://www.site1.com/feed''' + rss.CONFIG_SEPARATOR + '''f=fl+ftl;t=t|>>{}<<
 formats = f=ft+ftpal
 templates = t=t|<<{}>>
 
