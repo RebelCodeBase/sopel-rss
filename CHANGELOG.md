@@ -2,7 +2,12 @@
 
 [sopel-rss](https://github.com/RebelCodeBase/sopel-rss) is an [RSS](https://en.wikipedia.org/wiki/RSS) module for the [IRC](https://en.wikipedia.org/wiki/Internet_Relay_Chat) bot framework [sopel](https://github.com/sopel-irc/sopel). 
 
-## [0.3.0](https://github.com/RebelCodeBase/sopel-rss/tree/v0.3.0) (2016-09-09) templates per feed
+## [0.3.1](https://github.com/RebelCodeBase/sopel-rss/tree/v0.3.1) (2016-09-11) bugfixes and colors
+
+- added colors to README.md
+- fixed bugs
+
+## [0.3.0](https://github.com/RebelCodeBase/sopel-rss/tree/v0.3.0) (2016-09-10) templates per feed
 
 - added templates per feed
 - fixed bug
