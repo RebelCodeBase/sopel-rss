@@ -218,8 +218,6 @@ MESSAGES = {
         'channel "{}" must start with a "#"',
     'command_is_one_of':
         'where <command> is one of {}',
-    'consider_rss_help_config_formats':
-        'consider {}rss help config formats to create a valid format',
     'consider_rss_fields':
         'consider {}rss fields {} to create a valid format',
     'deleted_ring_buffer_for_feed':
