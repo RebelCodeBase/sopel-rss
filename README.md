@@ -151,7 +151,7 @@ Template strings define how the different fields of a feed item will be posted t
 
 You can use nearly any character you like but the percent sign % has a special meaning: it is the escape sign. If you want the bot to print a percent sign then you have to specify it twice: if the title of an item is "itemtitle" then *t=t|%%{}* will output "%itemtitle". The same is true for a comma after an escape sequence: if the title of an item is "itemtitle" then *t=t|%17%,{}%20* will output ",itemtitle" in italics.
 
-To print colors you have to use the percent sign the color code of a foreground color. Optionally you can add a dollar sign the color code of a background color. Here is a list of all valid color and other formatting codes:
+To print colors you have to use the percent sign and the color code of a foreground color. Optionally you can add a dollar sign and the color code of a background color. Here is a list of all valid color and other formatting codes:
 
 <table>
   <tr align=left>
