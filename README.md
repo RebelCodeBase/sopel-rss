@@ -153,29 +153,96 @@ You can use nearly any character you like but the percent sign % has a special m
 
 To print colors you have to use the percent sign the color code of a foreground color. Optionally you can add a dollar sign the color code of a background color. Here is a list of all valid color and other formatting codes:
 
-|code|name                            |
-|----|--------------------------------|
-|00  |white                           |
-|01  |black                           |
-|02  |blue (navy)                     |
-|03  |green                           |
-|04  |red                             |
-|05  |brown (maroon)                  |
-|06  |purple                          |
-|07  |orange (olive)                  |
-|08  |yellow                          |
-|09  |light green (lime)              |
-|10  |teal (a green/blue cyan)        |
-|11  |light cyan (cyan / aqua)        |
-|12  |light blue (royal)              |
-|13  |pink (light purple / fuchsia)   |
-|14  |grey                            |
-|15  |light grey (silver)             |
-|16  |bold                            |
-|17  |italic                          |
-|18  |underline                       |
-|19  |switch colors / "reverse video" |
-|20  |reset formatting                |
+<table>
+  <tr align=left>
+    <th>code</th>
+    <th>name</th>
+  </tr>
+  <tr style="color:#000000;background:#FFFFFF">
+    <td>00</td>
+    <td>white</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#000000">
+    <td>01</td>
+    <td>black</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#00007F">
+    <td>02</td>
+    <td>blue</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#009300">
+    <td>03</td>
+    <td>green</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#FF0000">
+    <td>04</td>
+    <td>red</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#7F0000">
+    <td>05</td>
+    <td>brown (maroon)</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#9C009C">
+    <td>06</td>
+    <td>purple</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#FC7F00">
+    <td>07</td>
+    <td>orange (olive)</td>
+  </tr>
+  <tr style="color:#000000;background:#FFFF00">
+    <td>08</td>
+    <td>yellow</td>
+  </tr>
+  <tr style="color:#000000;background:#00FC00">
+    <td>09</td>
+    <td>light green (lime)</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#009393">
+    <td>10</td>
+    <td>teal (a green/blue cyan)</td>
+  </tr>
+  <tr style="color:#000000;background:#00FFFF">
+    <td>11</td>
+    <td>light cyan (cyan / aqua)</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#0000FC">
+    <td>12</td>
+    <td>light blue (royal)</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#FF00FF">
+    <td>13</td>
+    <td>pink (light purple / fuchsia)</td>
+  </tr>
+  <tr style="color:#FFFFFF;background:#7F7F7F">
+    <td>14</td>
+    <td>grey</td>
+  </tr>
+  <tr style="color:#000000;background:#D2D2D2">
+    <td>15</td>
+    <td>light grey (silver) </td>
+  </tr>
+  <tr>
+    <td>16</td>
+    <td><b>bold</b></td>
+  </tr>
+  <tr>
+    <td>17</td>
+    <td><i>italic</i></td>
+  </tr>
+  <tr>
+    <td>18</td>
+    <td><u>underline</u></td>
+  </tr>
+  <tr>
+    <td>19</td>
+    <td><span style="color:#9C009C;background:#FFFF00">switch colors / </span><span style="color:#FFFF00;background:#9C009C"> "reverse video"</span></td>
+  </tr>
+  <tr>
+    <td>20</td>
+    <td>reset formatting </td>
+  </tr>
+</table>
 
 The command *.rss config templates* will show you the current template strings and a matching example output. This is the output of *.rss config templates* for the default template string (i.e. the value of *templates* in the config file is empty):
 
