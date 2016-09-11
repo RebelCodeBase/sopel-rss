@@ -810,8 +810,6 @@ def test_rss_config_formats_output(bot):
 
 def test_rss_formats_input_invalid(bot):
     rss._rss_config(bot, ['config', 'formats', 'fl+fty'])
-    expected = rss.MESSAGES['consider_rss_help_config_formats'].format(bot.config.core.prefix) + '\n'
-    assert expected == bot.output
     bot.output = ''
     rss._rss_config(bot, ['config', 'formats'])
     expected = 'f=fl+ftl\n'
