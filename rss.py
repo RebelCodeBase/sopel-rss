@@ -218,6 +218,8 @@ MESSAGES = {
         'channel "{}" must start with a "#"',
     'command_is_one_of':
         'where <command> is one of {}',
+    'consider_rss_help_config_formats':
+        'consider {}rss help config formats to create a valid format',
     'consider_rss_fields':
         'consider {}rss fields {} to create a valid format',
     'deleted_ring_buffer_for_feed':
@@ -236,8 +238,6 @@ MESSAGES = {
         'feed "{}" doesn\'t exist!',
     'fields_of_feed':
         'fields of feed "{}": "{}"',
-    'format_of_feed':
-        'format of feed "{}": {}',
     'get_help_on_config_keys_with':
         'get help on config keys with: {}rss help config {}',
     'read_hashes_of_feed_from_sqlite_table':
@@ -250,8 +250,6 @@ MESSAGES = {
         'saved hash "{}" of feed "{}" to sqlite table "{}"',
     'synopsis_rss':
         'synopsis: {}rss {}',
-    'templates_of_feed':
-        'templates of feed "{}": {}',
     'unable_to_read_feed':
         'unable to read feed',
     'unable_to_read_url_of_feed':
@@ -515,8 +513,10 @@ def _config_split_formats(bot, formats):
     if result:
         bot.memory['rss']['formats'] = result
         return True
+    else:
+        message = MESSAGES['consider_rss_help_config_formats'].format(bot.config.core.prefix)
+        bot.say(message)
 
-    bot.memory['rss']['formats'] = FORMAT_DEFAULT
     return False
 
 
@@ -890,7 +890,7 @@ def _rss_formats(bot, args):
 
     if len(args) == 2:
         format = bot.memory['rss']['options'][feedname].get_format()
-        message = MESSAGES['format_of_feed'].format(feedname, format)
+        message = format
         bot.say(message)
         return
 
@@ -902,7 +902,7 @@ def _rss_formats(bot, args):
 
     if not format_before == format_after:
         _config_save(bot)
-        message = MESSAGES['format_of_feed'].format(feedname, format_after)
+        message = format_after
         LOGGER.debug(message)
         bot.say(message)
         return
@@ -985,7 +985,7 @@ def _rss_templates(bot, args):
     if len(args) == 2:
         templates = bot.memory['rss']['options'][feedname].get_templates()
         if templates:
-            message = MESSAGES['templates_of_feed'].format(feedname, templates)
+            message = templates
             bot.say(message)
             message = _feed_templates_example(bot, feedname)
             bot.say(message)
@@ -998,7 +998,7 @@ def _rss_templates(bot, args):
 
     if not templates_before == templates_after:
         _config_save(bot)
-        message = MESSAGES['templates_of_feed'].format(feedname, templates_after)
+        message = templates_after
         LOGGER.debug(message)
         bot.say(message)
 

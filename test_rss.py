@@ -789,6 +789,16 @@ def test_rss_config_formats_output(bot):
     assert expected == bot.output
 
 
+def test_rss_formats_input_invalid(bot):
+    rss._rss_config(bot, ['config', 'formats', 'fl+fty'])
+    expected = rss.MESSAGES['consider_rss_help_config_formats'].format(bot.config.core.prefix) + '\n'
+    assert expected == bot.output
+    bot.output = ''
+    rss._rss_config(bot, ['config', 'formats'])
+    expected = 'f=fl+ftl\n'
+    assert expected == bot.output
+
+
 def test_rss_config_templates_list(bot):
     bot.memory['rss']['templates']['t'] = '†{}†'
     args = ['config', 'templates']
@@ -924,7 +934,7 @@ def test_rss_formats_feed_get(bot):
     rss._rss_formats(bot, ['format', 'feed1', 'f=yt+ytl'])
     bot.output = ''
     rss._rss_formats(bot, ['format', 'feed1'])
-    expected = rss.MESSAGES['format_of_feed'].format('feed1', 'f=yt+ytl') + '\n'
+    expected = 'f=yt+ytl\n'
     assert expected == bot.output
 
 
@@ -953,7 +963,7 @@ def test_rss_formats_format_set(bot):
 def test_rss_formats_format_output(bot_rss_update):
     rss._rss_formats(bot_rss_update, ['format', 'feed1', 'f=fadglpst+fadglpst'])
     rss._rss_update(bot_rss_update, ['update'])
-    expected = rss.MESSAGES['format_of_feed'].format('feed1', 'f=fadglpst+fadglpst') + '''
+    expected = 'f=fadglpst+fadglpst' + '''
 \x02[feed1]\x02 <Author 1> Description of article 1 1 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article1 (2016-08-21 01:10) Description of article 1 Title 1
 \x02[feed1]\x02 <Author 2> Description of article 2 2 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article2 (2016-08-22 02:20) Description of article 2 Title 2
 \x02[feed1]\x02 <Author 3> Description of article 3 3 at http://www.site1.com/ \x02→\x02 http://www.site1.com/article3 (2016-08-23 03:30) Description of article 3 Title 3
@@ -1065,13 +1075,13 @@ def test_rss_templates_get_custom(bot):
     rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06%16[{}]%20'])
     bot.output = ''
     rss._rss_templates(bot, ['templates', 'feed1'])
-    expected = 'templates of feed "feed1": t=f|%06%16[{}]%20\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
+    expected = 't=f|%06%16[{}]%20\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
     assert expected == bot.output
 
 
 def test_rss_templates_set(bot):
     rss._rss_templates(bot, ['templates', 'feed1', 't=f|%06%16[{}]%20'])
-    expected = 'templates of feed "feed1": t=f|%06%16[{}]%20\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
+    expected = 't=f|%06%16[{}]%20\n\x0306\x02[feed1]\x0f Title \x02→\x02 https://github.com/RebelCodeBase/sopel-rss\n'
     assert expected == bot.output
 
 
