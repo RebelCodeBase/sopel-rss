@@ -102,6 +102,25 @@ FEED_ITEM_NEITHER_TITLE_NOR_DESCRIPTION = '''<?xml version="1.0" encoding="utf-8
 </rss>'''
 
 
+FEED_SPY = '''<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+ <title>News About <![CDATA[S&P Depository Receipts]]></title>
+ <link><![CDATA[http://markets.financialcontent.com/stocks/action/rssfeed]]></link>
+ <description>News About <![CDATA[S&P Depository Receipts]]></description>
+ <language>en-us</language>
+
+ <item>
+  <title><![CDATA[Deutsche Bank Predicts 10% Pullback in S&P 500]]></title>
+  <link><![CDATA[http://markets.financialcontent.com/stocks/news/read?GUID=32821698&Symbol=SPY]]></link>
+  <pubDate><![CDATA[Sun, 11 Sep 2016 07:37:24 -0400]]></pubDate>
+  <guid><![CDATA[http://markets.financialcontent.com/stocks/news/read?GUID=32821698&Symbol=SPY]]></guid>
+ </item>
+
+</channel>
+</rss>
+'''
+
 def _fixture_bot_setup(request):
     bot = MockSopel('Sopel')
     bot = rss._config_define(bot)
@@ -987,6 +1006,13 @@ def test_rss_get_post_feed_items(bot):
     rss._feed_add(bot, '#channel', 'feedname', FEED_VALID)
     rss._rss_get(bot, ['get', 'feedname'])
     expected = '\x02[feedname]\x02 Title 1 \x02→\x02 http://www.site1.com/article1\n\x02[feedname]\x02 Title 2 \x02→\x02 http://www.site1.com/article2\n\x02[feedname]\x02 Title 3 \x02→\x02 http://www.site1.com/article3\n'
+    assert expected == bot.output
+
+
+def test_rss_get_feed_spy(bot):
+    rss._feed_add(bot, '#channel', 'SPY', FEED_SPY)
+    rss._rss_get(bot, ['get', 'SPY'])
+    expected = '\x02[SPY]\x02 Deutsche Bank Predicts 10% Pullback in S&P 500 \x02→\x02 http://markets.financialcontent.com/stocks/news/read?GUID=32821698&Symbol=SPY\n'
     assert expected == bot.output
 
 

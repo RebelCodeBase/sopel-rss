@@ -513,9 +513,6 @@ def _config_split_formats(bot, formats):
     if result:
         bot.memory['rss']['formats'] = result
         return True
-    else:
-        message = MESSAGES['consider_rss_help_config_formats'].format(bot.config.core.prefix)
-        bot.say(message)
 
     return False
 
@@ -731,9 +728,16 @@ def _feed_templates_example(bot, feedname):
 
 
 def _feed_update(bot, feedreader, feedname, chatty):
+    feed_ok = True
     feed = feedreader.get_feed()
 
     if not feed:
+        feed_ok = False
+    if hasattr(feed, 'bozo'):
+        if feed['bozo'] == 1:
+            feed_ok = False
+
+    if not feed_ok:
         url = bot.memory['rss']['feeds'][feedname]['url']
         message = MESSAGES['unable_to_read_url_of_feed'].format(url, feedname)
         LOGGER.error(message)
@@ -1133,7 +1137,7 @@ class Options:
 
         post = ''
         for f in self.get_output():
-            post += self.template_to_irc(templates[f].format(legend.get(f, '')) + ' ')
+            post += self.template_to_irc(templates[f]).format(legend.get(f, '')) + ' '
 
         return post[:-1]
 
