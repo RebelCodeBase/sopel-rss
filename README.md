@@ -244,6 +244,8 @@ To print colors you have to use the percent sign the color code of a foreground 
   </tr>
 </table>
 
+(Unfortunately, GitHub does not allow colors in Markdown. Have a look at [mirc.com](http://www.mirc.com/colors.html) the see real colors.)
+
 The command *.rss config templates* will show you the current template strings and a matching example output. This is the output of *.rss config templates* for the default template string (i.e. the value of *templates* in the config file is empty):
 
 t=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};t=p|({});t=s|{};t=t|{};t=y|%16→%16 {}
