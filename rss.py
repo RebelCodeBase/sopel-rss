@@ -726,16 +726,9 @@ def _feed_templates_example(bot, feedname):
 
 
 def _feed_update(bot, feedreader, feedname, chatty):
-    feed_ok = True
     feed = feedreader.get_feed()
 
     if not feed:
-        feed_ok = False
-    if hasattr(feed, 'bozo'):
-        if feed['bozo'] == 1:
-            feed_ok = False
-
-    if not feed_ok:
         url = bot.memory['rss']['feeds'][feedname]['url']
         message = MESSAGES['unable_to_read_url_of_feed'].format(url, feedname)
         LOGGER.error(message)
