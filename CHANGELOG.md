@@ -4,6 +4,7 @@
 
 ## unreleased
 
+- added rss colors
 - fixed typos
 
 ## [0.3.2](https://github.com/RebelCodeBase/sopel-rss/tree/v0.3.2) (2016-09-11) bugfixes

@@ -219,6 +219,12 @@ def test_rss_global_too_few_parameters(bot):
     assert expected == bot.output
 
 
+def test_rss_global_color(bot):
+    rss._rss(bot, ['colors'])
+    expected = '\x0301,00 00: white \x0f\x0300,01 01: black \x0f\x0300,02 02: blue \x0f\x0300,03 03: green \x0f\x0301,04 04: red \x0f\x0300,05 05: brown \x0f\x0300,06 06: purple \x0f\x0301,07 07: orange \x0f\x0301,08 08: yellow \x0f\x0301,09 09: lime \x0f\x0300,10 10: cyan \x0f\x0301,11 11: aqua \x0f\x0301,12 12: azure \x0f\x0301,13 13: pink \x0f\x0300,14 14: grey \x0f\x0301,15 15: silver \x0f\x0300,01 16: \x02bold\x02 \x0f\x0301,00 17: \x1ditalic\x1d \x0f\x0300,01 18: \x1funderline\x1f \x0f\n'
+    assert expected == bot.output
+
+
 def test_rss_global_config_templates(bot):
     rss._rss(bot, ['config', 'templates'])
     expected = 't=a|<{}>;t=d|{};t=f|%16[{}]%16;t=g|{};t=l|%16→%16 {};'
@@ -906,6 +912,12 @@ def test_rss_config_templates_output_dollar_after_control_sequence(bot):
 def test_rss_config_invalid_key(bot):
     rss._rss_config(bot, ['config', 'invalidkey'])
     expected = ''
+    assert expected == bot.output
+
+
+def test_rss_colors(bot):
+    rss._rss_colors(bot, ['colors'])
+    expected = '\x0301,00 00: white \x0f\x0300,01 01: black \x0f\x0300,02 02: blue \x0f\x0300,03 03: green \x0f\x0301,04 04: red \x0f\x0300,05 05: brown \x0f\x0300,06 06: purple \x0f\x0301,07 07: orange \x0f\x0301,08 08: yellow \x0f\x0301,09 09: lime \x0f\x0300,10 10: cyan \x0f\x0301,11 11: aqua \x0f\x0301,12 12: azure \x0f\x0301,13 13: pink \x0f\x0300,14 14: grey \x0f\x0301,15 15: silver \x0f\x0300,01 16: \x02bold\x02 \x0f\x0301,00 17: \x1ditalic\x1d \x0f\x0300,01 18: \x1funderline\x1f \x0f\n'
     assert expected == bot.output
 
 

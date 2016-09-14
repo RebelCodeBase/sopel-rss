@@ -29,27 +29,93 @@ ESCAPE_CHARACTER = '%'
 ESCAPE_COLOR = '\x03'
 
 ESCAPE_CODE = {
-    '00': '00',   # white
-    '01': '01',   # black
-    '02': '02',   # blue (navy)
-    '03': '03',   # green
-    '04': '04',   # red
-    '05': '05',   # brown (maroon)
-    '06': '06',   # purple
-    '07': '07',   # orange (olive)
-    '08': '08',   # yellow
-    '09': '09',   # light green (lime)
-    '10': '10',   # teal (a green/blue cyan)
-    '11': '11',   # light cyan (cyan / aqua)
-    '12': '12',   # light blue (royal)
-    '13': '13',   # pink (light purple / fuchsia)
-    '14': '14',   # grey
-    '15': '15',   # light grey (silver)
-    '16': '\x02', # bold
-    '17': '\x1d', # italic
-    '18': '\x1f', # underline
-    '19': '\x16', # reverse video
-    '20': '\x0f', # reset formatting
+    '00': '00',
+    '01': '01',
+    '02': '02',
+    '03': '03',
+    '04': '04',
+    '05': '05',
+    '06': '06',
+    '07': '07',
+    '08': '08',
+    '09': '09',
+    '10': '10',
+    '11': '11',
+    '12': '12',
+    '13': '13',
+    '14': '14',
+    '15': '15',
+    '16': '\x02',
+    '17': '\x1d',
+    '18': '\x1f',
+    '19': '\x16',
+    '20': '\x0f',
+}
+
+COLOR = {
+    '00': 'white',
+    '01': 'black',
+    '02': 'blue',
+    '03': 'green',
+    '04': 'red',
+    '05': 'brown',
+    '06': 'purple',
+    '07': 'orange',
+    '08': 'yellow',
+    '09': 'lime',
+    '10': 'cyan',
+    '11': 'aqua',
+    '12': 'azure',
+    '13': 'pink',
+    '14': 'grey',
+    '15': 'silver',
+    '16': 'bold',
+    '17': 'italic',
+    '18': 'underline',
+}
+
+FOREGROUND = {
+    '00': '01',
+    '01': '00',
+    '02': '00',
+    '03': '00',
+    '04': '01',
+    '05': '00',
+    '06': '00',
+    '07': '01',
+    '08': '01',
+    '09': '01',
+    '10': '00',
+    '11': '01',
+    '12': '01',
+    '13': '01',
+    '14': '00',
+    '15': '01',
+    '16': '00',
+    '17': '01',
+    '18': '00',
+}
+
+BACKGROUND = {
+    '00': '00',
+    '01': '01',
+    '02': '02',
+    '03': '03',
+    '04': '04',
+    '05': '05',
+    '06': '06',
+    '07': '07',
+    '08': '08',
+    '09': '09',
+    '10': '10',
+    '11': '11',
+    '12': '12',
+    '13': '13',
+    '14': '14',
+    '15': '15',
+    '16': '01',
+    '17': '00',
+    '18': '01',
 }
 
 CONFIG_SEPARATOR = ';'
@@ -81,6 +147,14 @@ COMMANDS = {
         'required': 3,
         'optional': 1,
         'function': '_rss_add'
+    },
+    'colors': {
+        'synopsis': 'synopsis: {}rss colors',
+        'helptext': ['show color and format codes.'],
+        'examples': [''],
+        'required': 0,
+        'optional': 0,
+        'function': '_rss_colors'
     },
     'config': {
         'synopsis': 'synopsis: {}rss config <key> [<value>]',
@@ -830,6 +904,20 @@ def _rss_add(bot, args):
     bot.say(message)
     bot.join(channel)
     _config_save(bot)
+
+
+def _rss_colors(bot, args):
+    message = ''
+    for c in sorted(COLOR):
+        message += ESCAPE_COLOR + FOREGROUND[c] + ','
+        message += BACKGROUND[c] + ' '
+        if int(c) < 16:
+            message += c + ': ' + COLOR[c]
+        else:
+            message += c + ': ' + ESCAPE_CODE[c]
+            message += COLOR[c] + ESCAPE_CODE[c]
+        message += ' ' + ESCAPE_CODE['20']
+    bot.say(message)
 
 
 def _rss_config(bot, args):

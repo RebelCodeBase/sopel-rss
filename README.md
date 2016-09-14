@@ -24,6 +24,12 @@ All commands require owner or admin privileges.
 
 Add the feed *\<url\>* to *\<channel\>* and call it *\<name\>*. Options may be specified, see Formats and Templates. The feed will be read approximately every minute and new items will be automatically posted to *\<channel\>*.
 
+### rss color &mdash; print colorful color codes
+
+#### Synopsis: *.rss color
+
+Print the color code and the name of each color and use the color as background color and print the codes and names for bold, italiv and underline. 
+
 ### rss config &mdash; get or set configuration values
 
 #### Synopsis: *.rss config \<key\> [\<value\>]*
