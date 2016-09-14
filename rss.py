@@ -642,7 +642,7 @@ def _feed_add(bot, channel, feedname, url, options=''):
     LOGGER.debug(message)
 
     # create new dict for feed properties
-    bot.memory['rss']['feeds'][feedname] = { 'channel': channel, 'name': feedname, 'url': url }
+    bot.memory['rss']['feeds'][feedname] = {'channel': channel, 'name': feedname, 'url': url}
 
     message_info = MESSAGES['added_rss_feed_to_channel_with_url'].format(feedname, channel, url)
     if options:
@@ -658,7 +658,7 @@ def _feed_check(bot, feedreader, channel, feedname):
     # read feed
     feed = feedreader.get_feed()
     if not feed:
-        message = MESSAGES['unabele_to_read_feed']
+        message = MESSAGES['unable_to_read_feed']
         return [message]
 
     try:
