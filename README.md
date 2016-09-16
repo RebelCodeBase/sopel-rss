@@ -26,7 +26,7 @@ Add the feed *\<url\>* to *\<channel\>* and call it *\<name\>*. Options may be s
 
 ### rss colors &mdash; print colorful color codes
 
-#### Synopsis: *.rss colors
+#### Synopsis: *.rss colors*
 
 Print the color code and the name of each color and use the color as background color and print the codes and names for bold, italic and underline. 
 
