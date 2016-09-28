@@ -437,7 +437,6 @@ def _config_define(bot):
     bot.memory['rss']['options'] = dict()
     bot.memory['rss']['formats'] = list()
     bot.memory['rss']['templates'] = dict()
-    bot.memory['rss']['templates'] = dict()
     return bot
 
 
